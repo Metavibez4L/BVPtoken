@@ -1,0 +1,18 @@
+[profile.default]
+# Solidity source files
+src = "contracts"
+
+# Where compiled artifacts go
+out = "out"
+
+# Directories containing libraries
+libs = ["lib", "node_modules/@openzeppelin", "node_modules/forge-std"]
+
+# Where your tests live
+test = "foundry/src"
+
+# (Optional) remappings if you need them for imports
+remappings = [
+  "@openzeppelin/=node_modules/@openzeppelin/",
+  "forge-std/=lib/forge-std/src/"
+]
