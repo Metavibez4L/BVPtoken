@@ -14,7 +14,6 @@ contract BVPStaking is Ownable {
     }
 
     mapping(address => Stake) public stakes;
-
     uint256 public constant LOCK_TIME = 90 days;
 
     constructor(IERC20 _token) Ownable(msg.sender) {
@@ -33,7 +32,7 @@ contract BVPStaking is Ownable {
         Stake storage s = stakes[msg.sender];
         require(s.amount > 0, "No stake");
         require(!s.unlocked, "Already unlocked");
-        require(block.timestamp >= s.timestamp + LOCK_TIME, "Stake is still locked");
+        require(block.timestamp >= s.timestamp + LOCK_TIME, "Stake still locked");
 
         s.unlocked = true;
     }
@@ -42,7 +41,7 @@ contract BVPStaking is Ownable {
         Stake storage s = stakes[msg.sender];
         require(s.unlocked, "Not unlocked");
         uint256 amt = s.amount;
-        require(amt > 0, "No staked balance");
+        require(amt > 0, "No stake");
 
         s.amount = 0;
         bvpToken.transfer(msg.sender, amt);
@@ -50,7 +49,7 @@ contract BVPStaking is Ownable {
 
     function emergencyWithdraw(address user) external onlyOwner {
         Stake storage s = stakes[user];
-        require(s.amount > 0, "Nothing to withdraw");
+        require(s.amount > 0, "Nothing staked");
 
         uint256 amt = s.amount;
         s.amount = 0;
