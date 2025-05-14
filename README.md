@@ -1,66 +1,35 @@
-## Foundry
+# Big Vision Pictures Token (BVPTOKEN)
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+## Overview
 
-Foundry consists of:
+BVPTOKEN is the native utility token powering Big Vision Pictures, a crypto-funded film and television studio. It grants holders access to exclusive events, behind-the-scenes experiences, and creative participation in BVP productions.
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Token Details
 
-## Documentation
+* **Type**: ERC-20 on Arbitrum Layer 2
 
-https://book.getfoundry.sh/
+* **Max Supply**: 1,000,000,000 BVP
 
-## Usage
+* **Circulating Supply (Year 1)**: 775,000,000 BVP
 
-### Build
+* **Buy Tax**: 8% (5% Operations, 3% Liquidity Pool)
 
-```shell
-$ forge build
-```
+* **Sell Tax**: 13% (10% Operations, 3% Liquidity Pool)
 
-### Test
+## Utility
 
-```shell
-$ forge test
-```
+* **Tiered Access Staking**: Stake BVP tokens to unlock tiered perks such as red-carpet invites, set visits, and cameo opportunities. No token rewards—staking solely grants access.
 
-### Format
+## Architecture
 
-```shell
-$ forge fmt
-```
+* **Layer 2 Chain**: Deployed on Arbitrum L2, leveraging the Nitro upgrade for high throughput and fast finality.
+* **Gas Abstraction**: Supports gasless meta-transactions via ERC-4337 for seamless user experience.
 
-### Gas Snapshots
+## Subchain Strategy
 
-```shell
-$ forge snapshot
-```
+* **Programmable Subchains**: Launch franchise-specific rollups via Arbitrum Orbit, inheriting mainnet security and liquidity with custom parameters.
+* **Custom Gas Tokens**: Subchains can utilize BVPTOKEN or dedicated gas tokens to optimize costs, governance, and user experience.
 
-### Anvil
+## License
 
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+MIT
