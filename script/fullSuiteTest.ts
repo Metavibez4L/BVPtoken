@@ -4,7 +4,7 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   const user = deployer;
 
-  // ✅ Latest deployed contracts
+  // ✅ Latest deployed contracts on Arbitrum Sepolia
   const BVP = "0x153885400fDD14c200ba9913Ec1110376c9ff27E";
   const STAKING = "0xeeE33547B85a9E48e5E6Ef8D017865E6710ECAc4";
   const ROUTER = "0x1a6D7C3Ea4Ef352E4943b9AE8f6031fe302bDaF1";
@@ -33,20 +33,21 @@ async function main() {
   console.log("💰 Treasury BVP balance:", treasuryBalance.toString());
 
   // === STAKING TEST ===
-  await token.approve(STAKING, testAmount);
-  await staking.stake(testAmount);
-  console.log("✅ User staked 1000 BVP");
+  const stakeState = await staking.stakes(user.address);
 
-  // ⏩ Simulate time passing for unlock (91 days)
-  await ethers.provider.send("evm_increaseTime", [91 * 86400]);
-  await ethers.provider.send("evm_mine");
+  if (stakeState.amount > 0) {
+    console.log("⚠️  User already has an active stake. Skipping new stake.");
+  } else {
+    await token.approve(STAKING, testAmount);
+    await staking.stake(testAmount);
+    console.log("✅ User staked 1000 BVP");
+  }
 
-  await staking.unlock();
-  await staking.unstake();
-  console.log("✅ Unlocked and unstaked");
+  // ⏩ Skip time simulation on real L2
+  console.log("⚠️  Skipping unlock due to testnet time restrictions");
 
   const tier = await staking.getTier(user.address);
-  console.log("✅ Tier after unstake:", tier);
+  console.log("✅ Tier (current):", tier);
 }
 
 main().catch((err) => {
