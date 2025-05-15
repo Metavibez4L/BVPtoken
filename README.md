@@ -16,6 +16,7 @@ Locked – Corporate Treasury: 225 000 000 BVP (22.5 %)
 
 Cliff-locked for 60–90 days before any spending
 
+
 3. Rebate-Only Fee Mechanisms
 
 Activity	Fee to Treasury	Refund to User
@@ -24,6 +25,7 @@ Cross-Chain Bridge (In/Out)	0.1 % of bridged amount	99.9 % credited/redeemed
 BVP → USDC Swap	0.1 % of swapped BVP	99.9 % USDC delivered
 
 No burns, no extra “reward” tokens—every fee point either locks value in treasury or returns it.
+
 
 4. Treasury Accrual & Lock-Ups
 
@@ -35,13 +37,6 @@ Weekly Sweeps: Unspent BVP moved back to an L1 Reserve Vault for long-term hold.
 
 DAO Governance: On-chain votes set release schedules, re-allocation for projects, and fee parameters.
 
-5. Effective “Tax” Comparison
-
-Scenario	Old Model	New Effective Fee
-Token Buy / Sell	8 % / 13 %	0 %
-L2 / L3 Transactions	N/A	GasFee × 20 %
-Bridge In / Out	N/A	0.1 %
-BVP → USDC Swap	N/A	0.1 %
 
 6. Net Impact
 
