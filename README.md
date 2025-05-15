@@ -16,14 +16,6 @@ Locked – Corporate Treasury: 225 000 000 BVP (22.5 %)
 
 Cliff-locked for 60–90 days before any spending
 
-2. L1 Taxes Removed
-
-Buy Tax: 8 % → 0 %
-
-Sell Tax: 13 % → 0 %
-
-No more on-chain purchase or sale levies—simplifies ERC-20 transfers and improves DEX onboarding.
-
 3. Rebate-Only Fee Mechanisms
 
 Activity	Fee to Treasury	Refund to User
