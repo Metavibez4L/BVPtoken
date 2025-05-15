@@ -6,15 +6,65 @@ BVPTOKEN is the native utility token powering Big Vision Pictures, a crypto-fund
 
 ## Token Details
 
-* **Type**: ERC-20 on Arbitrum Layer 2
+*1. Supply & Allocation
 
-* **Max Supply**: 1,000,000,000 BVP
+Max Supply: 1 000 000 000 BVP
 
-* **Circulating Supply (Year 1)**: 775,000,000 BVP
+Circulating Supply (Year 1): 775 000 000 BVP (77.5 %)
 
-* **Buy Tax**: 8% (5% Operations, 3% Liquidity Pool)
+Locked – Corporate Treasury: 225 000 000 BVP (22.5 %)
 
-* **Sell Tax**: 13% (10% Operations, 3% Liquidity Pool)
+Cliff-locked for 60–90 days before any spending
+
+2. L1 Taxes Removed
+
+Buy Tax: 8 % → 0 %
+
+Sell Tax: 13 % → 0 %
+
+No more on-chain purchase or sale levies—simplifies ERC-20 transfers and improves DEX onboarding.
+
+3. Rebate-Only Fee Mechanisms
+
+Activity	Fee to Treasury	Refund to User
+L2 & L3 Gas Fees	20 % of each BVP gas payment	80 % refunded immediately
+Cross-Chain Bridge (In/Out)	0.1 % of bridged amount	99.9 % credited/redeemed
+BVP → USDC Swap	0.1 % of swapped BVP	99.9 % USDC delivered
+
+No burns, no extra “reward” tokens—every fee point either locks value in treasury or returns it.
+
+4. Treasury Accrual & Lock-Ups
+
+All subchain-collected fees (gas slices, bridge fees, swap fees) flow into the L2 Corporate Treasury.
+
+Cliff-Lock Window: 60–90 days after receipt before any disbursement.
+
+Weekly Sweeps: Unspent BVP moved back to an L1 Reserve Vault for long-term hold.
+
+DAO Governance: On-chain votes set release schedules, re-allocation for projects, and fee parameters.
+
+5. Effective “Tax” Comparison
+
+Scenario	Old Model	New Effective Fee
+Token Buy / Sell	8 % / 13 %	0 %
+L2 / L3 Transactions	N/A	GasFee × 20 %
+Bridge In / Out	N/A	0.1 %
+BVP → USDC Swap	N/A	0.1 %
+
+6. Net Impact
+
+Usage-Driven Demand: Fees only when the network is used—governance, payments, swaps.
+
+Temporary Supply Compression: Treasury lock-ups withdraw tokens from liquid supply without burning.
+
+Max Supply Intact: No tokens are destroyed; 1 BVP ceiling remains fixed.
+
+No Inflationary Rewards: Rebate-only model prevents uncontrolled token issuance.
+
+Adaptive Governance: Fee slices, bridge fees, and lock periods can be tweaked by DAO as needs evolve.
+
+Transparent UX: Users pay clear, rebate-backed fees—no hidden charges at mint or burn.
+
 
 ## Utility
 
