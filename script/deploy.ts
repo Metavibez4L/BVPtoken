@@ -4,13 +4,32 @@ async function main() {
   const [deployer] = await ethers.getSigners();
   console.log("Deploying from:", deployer.address);
 
-  const bvpTokenAddress = "0x8B79c656DFE9Ab86cDF4D270eE0910753b94368c";       // 🔁 Replace with your actual deployed BVP token address
-  const treasuryAddress = deployer.address;                   // Or Gnosis Safe / vault address
+  // ✅ Deploy BVPToken
+  const Token = await ethers.getContractFactory("BVPToken");
+  const token = await Token.deploy(deployer.address); // treasury = deployer
+  await token.waitForDeployment();
+  const tokenAddress = await token.getAddress();
+  console.log("✅ BVPToken deployed at:", tokenAddress);
 
+  // ✅ Deploy BVPStaking
+  const Staking = await ethers.getContractFactory("BVPStaking");
+  const staking = await Staking.deploy(tokenAddress);
+  await staking.waitForDeployment();
+  const stakingAddress = await staking.getAddress();
+  console.log("✅ BVPStaking deployed at:", stakingAddress);
+
+  // ✅ Deploy GasRouter
   const GasRouter = await ethers.getContractFactory("GasRouter");
-  const router = await GasRouter.deploy(bvpTokenAddress, treasuryAddress);
+  const router = await GasRouter.deploy(tokenAddress, deployer.address); // treasury = deployer
   await router.waitForDeployment();
-  console.log("GasRouter deployed at:", await router.getAddress());
+  const routerAddress = await router.getAddress();
+  console.log("✅ GasRouter deployed at:", routerAddress);
+
+  // ✅ Approve GasRouter and Staking (optional: pre-approve them to handle tokens)
+  const approveAmount = ethers.parseEther("1000000");
+  await token.approve(stakingAddress, approveAmount);
+  await token.approve(routerAddress, approveAmount);
+  console.log("✅ Approved staking + router for token transfers");
 }
 
 main().catch((error) => {

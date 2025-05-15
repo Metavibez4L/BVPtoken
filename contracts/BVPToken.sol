@@ -11,5 +11,8 @@ contract BVPToken is ERC20, Ownable {
         _mint(msg.sender, MAX_SUPPLY);
     }
 
-    // All tax logic removed — standard ERC-20
+    // Ensure downstream contracts like GasRouter can override safely
+    function _transfer(address from, address to, uint256 amount) internal virtual override {
+        super._transfer(from, to, amount);
+    }
 }
