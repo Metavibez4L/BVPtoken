@@ -6,8 +6,7 @@ BVPTOKEN is the native utility token powering Big Vision Pictures, a crypto-fund
 
 ## Token Details
 
-*1. Supply & Allocation
-
+# Supply & Allocation
 Max Supply: 1 000 000 000 BVP
 
 Circulating Supply (Year 1): 775 000 000 BVP (77.5 %)
@@ -17,7 +16,7 @@ Locked – Corporate Treasury: 225 000 000 BVP (22.5 %)
 Cliff-locked for 60–90 days before any spending
 
 
-3. Rebate-Only Fee Mechanisms
+# Rebate-Only Fee Mechanisms
 
 Activity	Fee to Treasury	Refund to User
 L2 & L3 Gas Fees	20 % of each BVP gas payment	80 % refunded immediately
@@ -27,7 +26,7 @@ BVP → USDC Swap	0.1 % of swapped BVP	99.9 % USDC delivered
 No burns, no extra “reward” tokens—every fee point either locks value in treasury or returns it.
 
 
-4. Treasury Accrual & Lock-Ups
+# Treasury Accrual & Lock-Ups
 
 All subchain-collected fees (gas slices, bridge fees, swap fees) flow into the L2 Corporate Treasury.
 
@@ -38,7 +37,7 @@ Weekly Sweeps: Unspent BVP moved back to an L1 Reserve Vault for long-term hold.
 DAO Governance: On-chain votes set release schedules, re-allocation for projects, and fee parameters.
 
 
-6. Net Impact
+# Net Impact
 
 Usage-Driven Demand: Fees only when the network is used—governance, payments, swaps.
 
