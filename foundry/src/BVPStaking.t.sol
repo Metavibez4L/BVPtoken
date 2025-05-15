@@ -9,18 +9,14 @@ contract BVPStakingTest is Test {
     BVPToken token;
     BVPStaking staking;
     address user = address(0xABCD);
-    address other = address(0xDEF0);
 
     function setUp() public {
-        token = new BVPToken(address(this)); // treasury is test contract
+        token = new BVPToken(address(this)); // treasury param is unused now
         staking = new BVPStaking(IERC20(address(token)));
 
         token.transfer(user, 2_000_000 ether);
-
         vm.prank(user);
         token.approve(address(staking), 2_000_000 ether);
-
-        token.setTaxExempt(address(staking), true); // exempt staking contract
     }
 
     function testStakeUnlockUnstake() public {
@@ -50,27 +46,5 @@ contract BVPStakingTest is Test {
         uint256 afterBalance = token.balanceOf(address(this));
 
         assertEq(afterBalance - beforeBalance, 10_000 ether);
-    }
-
-    function testBuyTaxApplied() public {
-        token.setAMMPair(other, true);
-        token.transfer(other, 10_000 ether);
-
-        vm.prank(other);
-        token.transfer(user, 1_000 ether);
-
-        uint256 treasuryBal = token.balanceOf(address(this));
-        assertGt(treasuryBal, 0, "Treasury did not receive buy tax");
-    }
-
-    function testSellTaxApplied() public {
-        token.setAMMPair(other, true);
-        token.transfer(user, 10_000 ether);
-
-        vm.prank(user);
-        token.transfer(other, 1_000 ether);
-
-        uint256 treasuryBal = token.balanceOf(address(this));
-        assertGt(treasuryBal, 0, "Treasury did not receive sell tax");
     }
 }

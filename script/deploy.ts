@@ -2,17 +2,26 @@ import { ethers } from "hardhat";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
-  console.log("Deploying contracts with:", deployer.address);
+  console.log("Deploying from:", deployer.address);
 
+  // Deploy BVPToken — the treasury arg is unused in logic but retained for compatibility
   const Token = await ethers.getContractFactory("BVPToken");
-  const token = await Token.deploy();
+  const token = await Token.deploy(deployer.address);
   await token.waitForDeployment();
-  console.log("BVPToken deployed at:", await token.getAddress());
+  const tokenAddress = await token.getAddress();
+  console.log("BVPToken deployed at:", tokenAddress);
 
+  // Deploy Staking
   const Staking = await ethers.getContractFactory("BVPStaking");
-  const staking = await Staking.deploy(await token.getAddress());
+  const staking = await Staking.deploy(tokenAddress);
   await staking.waitForDeployment();
-  console.log("BVPStaking deployed at:", await staking.getAddress());
+  const stakingAddress = await staking.getAddress();
+  console.log("BVPStaking deployed at:", stakingAddress);
+
+  // Optional: Initial transfer to staking treasury or tier vaults
+  // await token.transfer(stakingAddress, ethers.parseEther("1000000"));
+
+  console.log("\n✅ Deployment complete.");
 }
 
 main().catch((error) => {

@@ -1,18 +1,17 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-describe("BVP Token + Staking with Tax Logic", function () {
+describe("BVP Token + Staking (No Tax)", function () {
   let token: any;
   let staking: any;
   let owner: any;
   let user: any;
-  let other: any;
 
   beforeEach(async () => {
-    [owner, user, other] = await ethers.getSigners();
+    [owner, user] = await ethers.getSigners();
 
     const Token = await ethers.getContractFactory("BVPToken");
-    token = await Token.deploy(owner.address); // treasury is deployer
+    token = await Token.deploy(owner.address); // Treasury arg now unused but still passed
     await token.waitForDeployment();
 
     const Staking = await ethers.getContractFactory("BVPStaking");
@@ -21,9 +20,6 @@ describe("BVP Token + Staking with Tax Logic", function () {
 
     await token.transfer(user.address, ethers.parseEther("2000000"));
     await token.connect(user).approve(await staking.getAddress(), ethers.parseEther("2000000"));
-
-    // exempt staking contract from tax
-    await token.setTaxExempt(await staking.getAddress(), true);
   });
 
   it("should stake, unlock after 90 days, and unstake", async () => {
@@ -50,23 +46,5 @@ describe("BVP Token + Staking with Tax Logic", function () {
     const after = await token.balanceOf(owner.address);
 
     expect(after - before).to.equal(ethers.parseEther("10000"));
-  });
-
-  it("should apply buy tax when receiving from AMM pair", async () => {
-    await token.setAMMPair(other.address, true); // mock AMM
-    await token.transfer(other.address, ethers.parseEther("10000"));
-    await token.connect(other).transfer(user.address, ethers.parseEther("1000"));
-
-    const treasuryBal = await token.balanceOf(owner.address);
-    expect(treasuryBal).to.be.gt(0); // tax received
-  });
-
-  it("should apply sell tax when sending to AMM pair", async () => {
-    await token.setAMMPair(other.address, true); // mock AMM
-    await token.transfer(user.address, ethers.parseEther("10000"));
-    await token.connect(user).transfer(other.address, ethers.parseEther("1000"));
-
-    const treasuryBal = await token.balanceOf(owner.address);
-    expect(treasuryBal).to.be.gt(0); // tax received
   });
 });
