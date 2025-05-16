@@ -1,18 +1,26 @@
 [profile.default]
-# Solidity source files
-src = "contracts"
+# Your production contracts live here
+src  = "contracts"
 
-# Where compiled artifacts go
-out = "out"
-
-# Directories containing libraries
-libs = ["lib", "node_modules/@openzeppelin", "node_modules/forge-std"]
-
-# Where your tests live
+# Your Foundry tests live here
 test = "foundry/src"
 
-# (Optional) remappings if you need them for imports
+# Build artifacts go here
+out  = "out"
+
+# External libs you import
+libs = [
+  "lib/forge-std/src"
+]
+
+# Remap import prefixes exactly as follows:
 remappings = [
-  "@openzeppelin/=node_modules/@openzeppelin/",
-  "forge-std/=lib/forge-std/src/"
+  # import "@openzeppelin/contracts/..." → node_modules/@openzeppelin/contracts/...
+  "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+
+  # import "forge-std/Test.sol" → lib/forge-std/src/Test.sol
+  "forge-std/=lib/forge-std/src/",
+
+  # import "hardhat/console.sol" → lib/forge-std/src/console.sol
+  "hardhat/=lib/forge-std/src/"
 ]
