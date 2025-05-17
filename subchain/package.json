@@ -1,0 +1,26 @@
+{
+  "name": "subchain",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@arbitrum/nitro-contracts": "^3.1.0",
+    "@arbitrum/orbit-sdk": "^0.23.1",
+    "viem": "^1.21.4"
+  },
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@types/node": "^22.15.18",
+    "dotenv": "^16.5.0",
+    "ethers": "^5.8.0",
+    "hardhat": "^2.24.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
