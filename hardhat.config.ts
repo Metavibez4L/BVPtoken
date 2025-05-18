@@ -1,9 +1,7 @@
-// hardhat.config.ts
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomiclabs/hardhat-ethers";
-import "@openzeppelin/hardhat-upgrades";
-import "@nomicfoundation/hardhat-verify";
 import * as dotenv from "dotenv";
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "@openzeppelin/hardhat-upgrades";
 
 dotenv.config();
 
@@ -16,6 +14,12 @@ const config: HardhatUserConfig = {
         runs: 200,
       },
     },
+  },
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts",
   },
   networks: {
     arbitrumSepolia: {

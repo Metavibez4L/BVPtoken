@@ -1,26 +1,11 @@
 [profile.default]
-# Your production contracts live here
-src  = "contracts"
+src = "contracts"
+test = "test"
+out = "out"
+libs = ["lib"]
 
-# Your Foundry tests live here
-test = "foundry/src"
-
-# Build artifacts go here
-out  = "out"
-
-# External libs you import
-libs = [
-  "lib/forge-std/src"
-]
-
-# Remap import prefixes exactly as follows:
 remappings = [
-  # import "@openzeppelin/contracts/..." → node_modules/@openzeppelin/contracts/...
+  "@openzeppelin/contracts-upgradeable/=node_modules/@openzeppelin/contracts-upgradeable/",
   "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
-
-  # import "forge-std/Test.sol" → lib/forge-std/src/Test.sol
-  "forge-std/=lib/forge-std/src/",
-
-  # import "hardhat/console.sol" → lib/forge-std/src/console.sol
-  "hardhat/=lib/forge-std/src/"
+  "forge-std/=lib/forge-std/src/"
 ]
