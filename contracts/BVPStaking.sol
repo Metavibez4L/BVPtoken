@@ -1,75 +1,114 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract BVPStaking is Ownable, ReentrancyGuard {
-    IERC20 public bvpToken;
-    uint256 public constant LOCK_TIME = 90 days;
+    IERC20 public immutable bvpToken;
 
     struct Stake {
         uint256 amount;
         uint256 timestamp;
-        bool unlocked;
+        uint256 lockTime;
+        bool    unlocked;
+    }
+    mapping(address => Stake) private stakes;
+
+    uint256 public constant LOCK_TIME_3M  = 90 days;
+    uint256 public constant LOCK_TIME_6M  = 180 days;
+    uint256 public constant LOCK_TIME_12M = 365 days;
+
+    // tier thresholds (18-decimals)
+    uint256 private constant TH_BRONZE   = 20_000   * 1e18;
+    uint256 private constant TH_SILVER   = 100_000  * 1e18;
+    uint256 private constant TH_GOLD     = 500_000  * 1e18;
+    uint256 private constant TH_PLATINUM = 1_000_000 * 1e18;
+    uint256 private constant TH_DIAMOND  = 2_000_000 * 1e18;
+
+    event Staked(address indexed user, uint256 amount, uint256 lockTime, uint256 unlockAt);
+    event Unlocked(address indexed user, uint256 when);
+    event Unstaked(address indexed user, uint256 amount);
+
+    constructor(address _bvpToken) {
+        require(_bvpToken != address(0), "Zero token");
+        bvpToken = IERC20(_bvpToken);
     }
 
-    mapping(address => Stake) public stakes;
+    function _stake(uint256 amount, uint256 lockTime) internal nonReentrant {
+        require(amount > 0, "Zero amount");
+        Stake storage s = stakes[msg.sender];
+        require(s.amount == 0, "Already staked");
 
-    constructor(address _bvp) Ownable(msg.sender) {
-        bvpToken = IERC20(_bvp);
+        s.amount    = amount;
+        s.timestamp = block.timestamp;
+        s.lockTime  = lockTime;
+        s.unlocked  = false;
+
+        bvpToken.transferFrom(msg.sender, address(this), amount);
+        emit Staked(msg.sender, amount, lockTime, block.timestamp + lockTime);
     }
 
-    function stake(uint256 amount) external nonReentrant {
-        require(amount > 0, "Invalid amount");
-        require(stakes[msg.sender].amount == 0, "Already staked");
+    function stake3Months(uint256 amount) external { _stake(amount, LOCK_TIME_3M); }
+    function stake6Months(uint256 amount) external { _stake(amount, LOCK_TIME_6M); }
+    function stake12Months(uint256 amount) external{ _stake(amount, LOCK_TIME_12M); }
 
-        bool success = bvpToken.transferFrom(msg.sender, address(this), amount);
-        require(success, "Transfer failed");
-
-        stakes[msg.sender] = Stake(amount, block.timestamp, false);
-    }
-
-    function unlock() external {
+    function unlock() external nonReentrant {
         Stake storage s = stakes[msg.sender];
         require(s.amount > 0, "No stake");
-        require(!s.unlocked, "Already unlocked");
-        require(block.timestamp >= s.timestamp + LOCK_TIME, "Stake still locked");
+        require(!s.unlocked,    "Already unlocked");
+        require(block.timestamp >= s.timestamp + s.lockTime, "Still locked");
 
         s.unlocked = true;
+        emit Unlocked(msg.sender, block.timestamp);
     }
 
     function unstake() external nonReentrant {
-        Stake storage s = stakes[msg.sender];
+        Stake memory s = stakes[msg.sender];
         require(s.unlocked, "Not unlocked");
-
-        uint256 amt = s.amount;
         delete stakes[msg.sender];
-
-        bool success = bvpToken.transfer(msg.sender, amt);
-        require(success, "Transfer failed");
+        bvpToken.transfer(msg.sender, s.amount);
+        emit Unstaked(msg.sender, s.amount);
     }
 
-    function emergencyWithdraw(address staker) external onlyOwner nonReentrant {
-        Stake storage s = stakes[staker];
+    function emergencyWithdraw(address user) external onlyOwner nonReentrant {
+        Stake memory s = stakes[user];
         require(s.amount > 0, "Nothing staked");
-
-        uint256 amt = s.amount;
-        delete stakes[staker];
-
-        bool success = bvpToken.transfer(owner(), amt);
-        require(success, "Transfer failed");
+        delete stakes[user];
+        bvpToken.transfer(user, s.amount);
+        emit Unstaked(user, s.amount);
     }
 
-    function getTier(address user) external view returns (string memory) {
-        uint256 amt = stakes[user].amount;
+    function getStake(address user)
+      external view
+      returns (uint256 amount, uint256 timestamp, uint256 lockTime, bool unlocked, uint256 unlockAt)
+    {
+        Stake storage s = stakes[user];
+        amount   = s.amount;
+        timestamp= s.timestamp;
+        lockTime = s.lockTime;
+        unlocked = s.unlocked;
+        unlockAt = s.timestamp + s.lockTime;
+    }
 
-        if (amt >= 2_000_000 ether) return "Diamond";
-        if (amt >= 1_000_000 ether) return "Platinum";
-        if (amt >= 500_000 ether) return "Gold";
-        if (amt >= 100_000 ether) return "Silver";
-        if (amt >= 20_000 ether) return "Bronze";
+    function getTierCode(address user) public view returns (uint8) {
+        uint256 a = stakes[user].amount;
+        if (a >= TH_DIAMOND)  return 5;
+        if (a >= TH_PLATINUM) return 4;
+        if (a >= TH_GOLD)     return 3;
+        if (a >= TH_SILVER)   return 2;
+        if (a >= TH_BRONZE)   return 1;
+        return 0;
+    }
+
+    function getTierName(address user) external view returns (string memory) {
+        uint8 code = getTierCode(user);
+        if (code == 1) return "Bronze";
+        if (code == 2) return "Silver";
+        if (code == 3) return "Gold";
+        if (code == 4) return "Platinum";
+        if (code == 5) return "Diamond";
         return "None";
     }
 }
