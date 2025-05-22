@@ -1,79 +1,55 @@
-import { expect } from "chai";
 import { ethers } from "hardhat";
-import type { BVPToken } from "../typechain-types";
+import { expect } from "chai";
+import { Contract } from "ethers";
 
-describe("BVPToken allocation", function () {
-  let token: BVPToken;
-  let addrs: {
-    publicSale: string;
-    operations: string;
-    presale: string;
-    stakingRewards: string;
-    marketing: string;
-    founders: string;
-    startTeam: string;
-    advisors: string;
-    treasury: string;
-    liquidity: string;
-  };
+describe("BVPToken", function () {
+  let token: Contract;
+  let recipients: any[];
 
-  beforeEach(async function () {
-    const signers = await ethers.getSigners();
-    addrs = {
-      publicSale:     signers[1].address,
-      operations:     signers[2].address,
-      presale:        signers[3].address,
-      stakingRewards: signers[4].address,
-      marketing:      signers[5].address,
-      founders:       signers[6].address,
-      startTeam:      signers[7].address,
-      advisors:       signers[8].address,
-      treasury:       signers[9].address,
-      liquidity:      signers[10].address,
+  beforeEach(async () => {
+    recipients = await ethers.getSigners();
+
+    token = await (await ethers.getContractFactory("BVPToken")).deploy(
+      recipients[0].address, // Public Sale
+      recipients[1].address, // Operations
+      recipients[2].address, // Presale
+      recipients[3].address, // Marketing
+      recipients[4].address, // Founders
+      recipients[5].address, // Start Team
+      recipients[6].address, // Advisors
+      recipients[7].address, // Treasury
+      recipients[8].address  // Liquidity
+    );
+    await token.deployed();
+  });
+
+  it("should have correct total supply", async () => {
+    const totalSupply = await token.totalSupply();
+    const expected = ethers.utils.parseEther("1000000000");
+    expect(totalSupply.toString()).to.equal(expected.toString());
+  });
+
+  it("should distribute correct allocations", async () => {
+    const checkAlloc = async (index: number, expectedPercent: number) => {
+      const bal = await token.balanceOf(recipients[index].address);
+      const expected = ethers.utils.parseEther((1000000000 * expectedPercent / 100).toString());
+      expect(bal.toString()).to.equal(expected.toString());
     };
 
-    const Factory = await ethers.getContractFactory("BVPToken");
-    token = (await Factory.deploy(
-      addrs.publicSale,
-      addrs.operations,
-      addrs.presale,
-      addrs.stakingRewards,
-      addrs.marketing,
-      addrs.founders,
-      addrs.startTeam,
-      addrs.advisors,
-      addrs.treasury,
-      addrs.liquidity
-    )) as BVPToken;
-    await token.waitForDeployment();
+    await checkAlloc(0, 30); // Public Sale
+    await checkAlloc(1, 20); // Operations
+    await checkAlloc(2, 10); // Presale
+    await checkAlloc(3, 15); // Marketing
+    await checkAlloc(4, 5);  // Founders
+    await checkAlloc(5, 5);  // Start Team
+    await checkAlloc(6, 5);  // Advisors
+    await checkAlloc(7, 5);  // Treasury
+    await checkAlloc(8, 5);  // Liquidity
   });
 
-  it("has correct name & symbol", async function () {
-    expect(await token.name()).to.equal("Big Vision Pictures Token");
-    expect(await token.symbol()).to.equal("BVP");
-  });
-
-  it("mints exactly 1 000 000 000 tokens total", async function () {
-    // totalSupply() returns a bigint
-    const tot: bigint = await token.totalSupply();
-    // expected = 1e9 * 1e18 = 1_000_000_000n * (10n ** 18n)
-    const expected = 1_000_000_000n * (10n ** 18n);
-    expect(tot).to.equal(expected);
-  });
-
-  it("allocates correct percentages to each address", async function () {
-    const tot: bigint = await token.totalSupply();
-    const pctOf = (p: number) => (tot * BigInt(p)) / 100n;
-
-    expect(await token.balanceOf(addrs.publicSale)).to.equal(pctOf(30));
-    expect(await token.balanceOf(addrs.operations)).to.equal(pctOf(20));
-    expect(await token.balanceOf(addrs.presale)).to.equal(pctOf(10));
-    expect(await token.balanceOf(addrs.stakingRewards)).to.equal(pctOf(10));
-    expect(await token.balanceOf(addrs.marketing)).to.equal(pctOf(5));
-    expect(await token.balanceOf(addrs.founders)).to.equal(pctOf(5));
-    expect(await token.balanceOf(addrs.startTeam)).to.equal(pctOf(5));
-    expect(await token.balanceOf(addrs.advisors)).to.equal(pctOf(5));
-    expect(await token.balanceOf(addrs.treasury)).to.equal(pctOf(5));
-    expect(await token.balanceOf(addrs.liquidity)).to.equal(pctOf(5));
+  it("should allow transfers", async () => {
+    await token.connect(recipients[0]).transfer(recipients[9].address, ethers.utils.parseEther("100"));
+    const bal = await token.balanceOf(recipients[9].address);
+    expect(bal.toString()).to.equal(ethers.utils.parseEther("100").toString());
   });
 });

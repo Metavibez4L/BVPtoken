@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
-    "paths": {
-      "@openzeppelin/*": ["node_modules/@openzeppelin/*"]
-    }
-  }
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "dist"
+  },
+  "include": ["./scripts", "./test", "./typechain-types"],
+  "files": ["./hardhat.config.ts"]
 }

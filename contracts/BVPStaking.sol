@@ -31,7 +31,7 @@ contract BVPStaking is Ownable, ReentrancyGuard {
     event Unlocked(address indexed user, uint256 when);
     event Unstaked(address indexed user, uint256 amount);
 
-    constructor(address _bvpToken) {
+    constructor(address _bvpToken) Ownable(msg.sender) {
         require(_bvpToken != address(0), "Zero token");
         bvpToken = IERC20(_bvpToken);
     }
