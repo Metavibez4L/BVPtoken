@@ -1,5 +1,0 @@
-{
-  "solc-remaps": [
-    "@openzeppelin=util/openzeppelin-contracts"
-  ]
-}
