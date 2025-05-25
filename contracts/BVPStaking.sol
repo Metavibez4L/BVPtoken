@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract BVPStaking is Ownable, ReentrancyGuard {
+contract BVPStaking is ReentrancyGuard {
     IERC20 public immutable bvpToken;
 
     struct Stake {
@@ -20,7 +19,6 @@ contract BVPStaking is Ownable, ReentrancyGuard {
     uint256 public constant LOCK_TIME_6M  = 180 days;
     uint256 public constant LOCK_TIME_12M = 365 days;
 
-    // tier thresholds (18-decimals)
     uint256 private constant TH_BRONZE   = 20_000   * 1e18;
     uint256 private constant TH_SILVER   = 100_000  * 1e18;
     uint256 private constant TH_GOLD     = 500_000  * 1e18;
@@ -31,7 +29,7 @@ contract BVPStaking is Ownable, ReentrancyGuard {
     event Unlocked(address indexed user, uint256 when);
     event Unstaked(address indexed user, uint256 amount);
 
-    constructor(address _bvpToken) Ownable(msg.sender) {
+    constructor(address _bvpToken) {
         require(_bvpToken != address(0), "Zero token");
         bvpToken = IERC20(_bvpToken);
     }
@@ -46,7 +44,7 @@ contract BVPStaking is Ownable, ReentrancyGuard {
         s.lockTime  = lockTime;
         s.unlocked  = false;
 
-        bvpToken.transferFrom(msg.sender, address(this), amount);
+        require(bvpToken.transferFrom(msg.sender, address(this), amount), "TRANSFER_FROM_FAILED");
         emit Staked(msg.sender, amount, lockTime, block.timestamp + lockTime);
     }
 
@@ -57,7 +55,7 @@ contract BVPStaking is Ownable, ReentrancyGuard {
     function unlock() external nonReentrant {
         Stake storage s = stakes[msg.sender];
         require(s.amount > 0, "No stake");
-        require(!s.unlocked,    "Already unlocked");
+        require(!s.unlocked, "Already unlocked");
         require(block.timestamp >= s.timestamp + s.lockTime, "Still locked");
 
         s.unlocked = true;
@@ -68,21 +66,13 @@ contract BVPStaking is Ownable, ReentrancyGuard {
         Stake memory s = stakes[msg.sender];
         require(s.unlocked, "Not unlocked");
         delete stakes[msg.sender];
-        bvpToken.transfer(msg.sender, s.amount);
+        require(bvpToken.transfer(msg.sender, s.amount), "TRANSFER_FAILED");
         emit Unstaked(msg.sender, s.amount);
     }
 
-    function emergencyWithdraw(address user) external onlyOwner nonReentrant {
-        Stake memory s = stakes[user];
-        require(s.amount > 0, "Nothing staked");
-        delete stakes[user];
-        bvpToken.transfer(user, s.amount);
-        emit Unstaked(user, s.amount);
-    }
-
     function getStake(address user)
-      external view
-      returns (uint256 amount, uint256 timestamp, uint256 lockTime, bool unlocked, uint256 unlockAt)
+        external view
+        returns (uint256 amount, uint256 timestamp, uint256 lockTime, bool unlocked, uint256 unlockAt)
     {
         Stake storage s = stakes[user];
         amount   = s.amount;

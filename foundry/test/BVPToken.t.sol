@@ -5,41 +5,52 @@ import "forge-std/Test.sol";
 import "src/BVPToken.sol";
 
 contract BVPTokenTest is Test {
-    BVPToken token;
-    address[9] recipients;
+    BVPToken public token;
+
+    address public publicSale        = address(0xA1);
+    address public operations        = address(0xA2);
+    address public presale           = address(0xA3);
+    address public foundersAndTeam   = address(0xA4); // merged founders + team
+    address public marketing         = address(0xA5);
+    address public advisors          = address(0xA6);
+    address public treasury          = address(0xA7);
+    address public liquidity         = address(0xA8);
+    address public user              = address(0xB0);
 
     function setUp() public {
-        for (uint i = 0; i < 9; i++) {
-            recipients[i] = address(uint160(i + 1));
-        }
-
         token = new BVPToken(
-            recipients[0], recipients[1], recipients[2], recipients[3],
-            recipients[4], recipients[5], recipients[6], recipients[7],
-            recipients[8]
+            publicSale,
+            operations,
+            presale,
+            foundersAndTeam,
+            marketing,
+            advisors,
+            treasury,
+            liquidity
         );
     }
 
-    function testTotalSupply() public view {
-        assertEq(token.totalSupply(), 1_000_000_000 ether);
+    function testTotalSupply() public {
+        uint256 supply = token.totalSupply();
+        assertEq(supply, 1_000_000_000e18);
     }
 
-    function testAllocationShares() public view {
-        assertEq(token.balanceOf(recipients[0]), 300_000_000 ether); // 30%
-        assertEq(token.balanceOf(recipients[1]), 200_000_000 ether); // 20%
-        assertEq(token.balanceOf(recipients[2]), 100_000_000 ether); // 10%
-        assertEq(token.balanceOf(recipients[3]), 150_000_000 ether); // 15%
-        assertEq(token.balanceOf(recipients[4]), 50_000_000 ether);  // 5%
+    function testAllocations() public {
+        assertEq(token.balanceOf(publicSale),      300_000_000e18);
+        assertEq(token.balanceOf(operations),      200_000_000e18);
+        assertEq(token.balanceOf(presale),         100_000_000e18);
+        assertEq(token.balanceOf(foundersAndTeam), 100_000_000e18);
+        assertEq(token.balanceOf(marketing),       150_000_000e18);
+        assertEq(token.balanceOf(advisors),         50_000_000e18);
+        assertEq(token.balanceOf(treasury),         50_000_000e18);
+        assertEq(token.balanceOf(liquidity),        50_000_000e18);
     }
 
-    function testTransfersWork() public {
-        address sender = recipients[0];
-        address receiver = recipients[8];
-        uint256 before = token.balanceOf(receiver);
+    function testTransferWorks() public {
+        vm.prank(publicSale);
+        token.transfer(user, 1_000e18);
 
-        vm.prank(sender);
-        token.transfer(receiver, 1 ether);
-
-        assertEq(token.balanceOf(receiver), before + 1 ether);
+        assertEq(token.balanceOf(user), 1_000e18);
+        assertEq(token.balanceOf(publicSale), 299_999_000e18);
     }
 }

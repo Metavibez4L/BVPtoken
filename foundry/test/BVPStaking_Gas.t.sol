@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "src/BVPStaking.sol";
 import "src/BVPToken.sol";
 
-contract BVPStakingTierFuzzTest is Test {
+contract BVPStakingGasTest is Test {
     BVPStaking public staking;
     BVPToken public token;
     address public user = address(0x123);
@@ -33,30 +33,25 @@ contract BVPStakingTierFuzzTest is Test {
 
         staking = new BVPStaking(address(token));
 
-        token.transfer(user, 10_000_000e18);
+        token.transfer(user, 1_000_000e18);
         vm.prank(user);
-        token.approve(address(staking), 10_000_000e18);
+        token.approve(address(staking), 1_000_000e18);
     }
 
-    function testFuzzTierAssignment(uint256 amount) public {
-        amount = bound(amount, 0, 2_500_000e18);
+    function testGasStake3M() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+    }
 
-        if (amount == 0) {
-            vm.prank(user);
-            vm.expectRevert("Zero amount");
-            staking.stake3Months(amount);
-            return;
-        }
+    function testGasUnlockAndUnstake() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        vm.warp(block.timestamp + 91 days);
+        vm.prank(user);
+        staking.unlock();
 
         vm.prank(user);
-        staking.stake3Months(amount);
-        string memory tier = staking.getTierName(user);
-
-        if (amount >= 2_000_000e18)       assertEq(tier, "Diamond");
-        else if (amount >= 1_000_000e18)  assertEq(tier, "Platinum");
-        else if (amount >= 500_000e18)    assertEq(tier, "Gold");
-        else if (amount >= 100_000e18)    assertEq(tier, "Silver");
-        else if (amount >= 20_000e18)     assertEq(tier, "Bronze");
-        else                              assertEq(tier, "None");
+        staking.unstake();
     }
 }

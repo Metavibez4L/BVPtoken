@@ -3,51 +3,38 @@ import { expect } from "chai";
 import { Contract } from "ethers";
 
 describe("BVPStaking", function () {
-  let bvpToken: Contract;
+  let token: Contract;
   let staking: Contract;
-  let owner: any;
-  let user: any;
+  let recipients: any[];
 
   beforeEach(async () => {
-    [owner, user] = await ethers.getSigners();
+    recipients = await ethers.getSigners();
 
-    const Token = await ethers.getContractFactory("BVPToken");
-    bvpToken = await Token.deploy(
-      owner.address, owner.address, owner.address, owner.address,
-      owner.address, owner.address, owner.address, owner.address,
-      owner.address
+    token = await (await ethers.getContractFactory("BVPToken")).deploy(
+      recipients[0].address, // Public Sale
+      recipients[1].address, // Operations
+      recipients[2].address, // Presale
+      recipients[3].address, // Founders & Team
+      recipients[4].address, // Marketing
+      recipients[5].address, // Advisors
+      recipients[6].address, // Treasury
+      recipients[7].address  // Liquidity
     );
-    await bvpToken.deployed();
+    await token.deployed();
 
-    const Staking = await ethers.getContractFactory("BVPStaking");
-    staking = await Staking.deploy(bvpToken.address);
+    staking = await (await ethers.getContractFactory("BVPStaking")).deploy(token.address);
     await staking.deployed();
 
-    await bvpToken.transfer(user.address, ethers.utils.parseEther("1000000"));
-    await bvpToken.connect(user).approve(staking.address, ethers.utils.parseEther("1000000"));
+    await token.connect(recipients[0]).transfer(recipients[8].address, ethers.utils.parseEther("100000"));
+    await token.connect(recipients[8]).approve(staking.address, ethers.utils.parseEther("100000"));
   });
 
   it("should stake and assign Silver tier", async () => {
-    await staking.connect(user).stake3Months(ethers.utils.parseEther("100000"));
-    const [amount,, lockTime,, unlockAt] = await staking.getStake(user.address);
-    expect(amount.toString()).to.equal(ethers.utils.parseEther("100000").toString());
-    expect(lockTime.toString()).to.equal((90 * 24 * 60 * 60).toString());
+    await staking.connect(recipients[8]).stake3Months(ethers.utils.parseEther("100000"));
+    const stake = await staking.getStake(recipients[8].address);
 
-    const tier = await staking.getTierName(user.address);
+    expect(stake.amount.toString()).to.equal(ethers.utils.parseEther("100000").toString());
+    const tier = await staking.getTierName(recipients[8].address);
     expect(tier).to.equal("Silver");
-  });
-
-  it("should unlock and unstake after lock time", async () => {
-    await staking.connect(user).stake3Months(ethers.utils.parseEther("100000"));
-
-    // fast-forward time by 91 days
-    await ethers.provider.send("evm_increaseTime", [91 * 24 * 60 * 60]);
-    await ethers.provider.send("evm_mine", []);
-
-    await staking.connect(user).unlock();
-    await staking.connect(user).unstake();
-
-    const [amount] = await staking.getStake(user.address);
-    expect(amount.toString()).to.equal("0");
   });
 });

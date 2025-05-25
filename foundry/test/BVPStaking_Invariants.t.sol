@@ -10,13 +10,27 @@ contract BVPStakingInvariantsTest is Test {
     BVPToken public token;
     address public user = address(0x123);
 
-    address public publicSale = address(this);
+    address public publicSale       = address(this);
+    address public operations       = address(0x1);
+    address public presale          = address(0x2);
+    address public foundersAndTeam  = address(0x3);
+    address public marketing        = address(0x4);
+    address public advisors         = address(0x5);
+    address public treasury         = address(0x6);
+    address public liquidity        = address(0x7);
 
     function setUp() public {
         token = new BVPToken(
-            publicSale, publicSale, publicSale, publicSale, publicSale,
-            publicSale, publicSale, publicSale, publicSale
+            publicSale,
+            operations,
+            presale,
+            foundersAndTeam,
+            marketing,
+            advisors,
+            treasury,
+            liquidity
         );
+
         staking = new BVPStaking(address(token));
 
         token.transfer(user, 1_000_000e18);

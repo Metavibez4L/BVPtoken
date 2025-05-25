@@ -1,4 +1,4 @@
-//// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.29;
 
 import "forge-std/Test.sol";
@@ -10,24 +10,22 @@ contract BVPStakingFailuresTest is Test {
     BVPToken public token;
     address public user = address(0x123);
 
-    address public publicSale   = address(0x1);
-    address public operations   = address(0x2);
-    address public presale      = address(0x3);
-    address public marketing    = address(0x4);
-    address public founders     = address(0x5);
-    address public startTeam    = address(0x6);
-    address public advisors     = address(0x7);
-    address public treasury     = address(0x8);
-    address public liquidity    = address(0x9);
+    address public publicSale       = address(0x1);
+    address public operations       = address(0x2);
+    address public presale          = address(0x3);
+    address public foundersAndTeam  = address(0x4); // merged founders + team
+    address public marketing        = address(0x5);
+    address public advisors         = address(0x6);
+    address public treasury         = address(0x7);
+    address public liquidity        = address(0x8);
 
     function setUp() public {
         token = new BVPToken(
             publicSale,
             operations,
             presale,
+            foundersAndTeam,
             marketing,
-            founders,
-            startTeam,
             advisors,
             treasury,
             liquidity
