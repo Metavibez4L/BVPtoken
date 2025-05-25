@@ -1,0 +1,32 @@
+{
+  "network": "arbitrum-sepolia",
+  "chainId": 421614,
+  "deployer": "0x8B79c656DFE9Ab86cDF4D270eE0910753b94368c",
+  "contracts": {
+    "BVPToken": {
+      "address": "0x6450A13E72f0999dC86A419af219C79738172318",
+      "verified": true
+    },
+    "BVPStaking": {
+      "address": "0x027e0a596b2370064c91ccA0C7A48a39858Bd082",
+      "verified": true
+    }
+  },
+  "allocationRecipients": {
+    "PublicSale": "0x3666FA58D081c4ec1EA94BD910E32A239c7bDdaa",
+    "Operations": "0x104104eceF7eFf06707a5E063AaB37Dea7167E4d",
+    "Presale": "0xd70603695f137428A6b73b0Ab37F793951C36fC0",
+    "FoundersAndTeam": "0x60c8309777C5dd9DC4e9C5089eE6C8F2D9477588",
+    "Marketing": "0x672878a0F05C37fe8568f7D30aEC342f26386957",
+    "Advisors": "0x6E6DCF0612c5b28e871377218f09f53Af58182f5",
+    "Treasury": "0x3c3B380672B9b6B35dA9C6e91D39d39BD76264A9",
+    "Liquidity": "0x6fEDdf409a251468AfD821f1af3f62f04bEE40b4"
+  },
+  "verification": {
+    "arbiscan": true,
+    "urls": {
+      "BVPToken": "https://sepolia.arbiscan.io/address/0x6450A13E72f0999dC86A419af219C79738172318#code",
+      "BVPStaking": "https://sepolia.arbiscan.io/address/0x027e0a596b2370064c91ccA0C7A48a39858Bd082#code"
+    }
+  }
+}
