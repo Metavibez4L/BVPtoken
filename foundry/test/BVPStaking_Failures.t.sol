@@ -1,0 +1,113 @@
+//// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.29;
+
+import "forge-std/Test.sol";
+import "src/BVPStaking.sol";
+import "src/BVPToken.sol";
+
+contract BVPStakingFailuresTest is Test {
+    BVPStaking public staking;
+    BVPToken public token;
+    address public user = address(0x123);
+
+    address public publicSale   = address(0x1);
+    address public operations   = address(0x2);
+    address public presale      = address(0x3);
+    address public marketing    = address(0x4);
+    address public founders     = address(0x5);
+    address public startTeam    = address(0x6);
+    address public advisors     = address(0x7);
+    address public treasury     = address(0x8);
+    address public liquidity    = address(0x9);
+
+    function setUp() public {
+        token = new BVPToken(
+            publicSale,
+            operations,
+            presale,
+            marketing,
+            founders,
+            startTeam,
+            advisors,
+            treasury,
+            liquidity
+        );
+
+        staking = new BVPStaking(address(token));
+
+        vm.prank(publicSale);
+        token.transfer(user, 1_000_000e18);
+
+        vm.prank(user);
+        token.approve(address(staking), 1_000_000e18);
+    }
+
+    function testCannotStakeZeroAmount() public {
+        vm.prank(user);
+        vm.expectRevert("Zero amount");
+        staking.stake3Months(0);
+    }
+
+    function testCannotStakeTwice() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        vm.prank(user);
+        vm.expectRevert("Already staked");
+        staking.stake6Months(100_000e18);
+    }
+
+    function testCannotUnlockBeforeLockExpires() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        vm.warp(block.timestamp + 30 days);
+        vm.prank(user);
+        vm.expectRevert("Still locked");
+        staking.unlock();
+    }
+
+    function testCannotUnlockIfNoStake() public {
+        vm.prank(user);
+        vm.expectRevert("No stake");
+        staking.unlock();
+    }
+
+    function testCannotUnlockTwice() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        vm.warp(block.timestamp + 91 days);
+        vm.prank(user);
+        staking.unlock();
+
+        vm.prank(user);
+        vm.expectRevert("Already unlocked");
+        staking.unlock();
+    }
+
+    function testCannotUnstakeIfNotUnlocked() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        vm.warp(block.timestamp + 91 days);
+        vm.prank(user);
+        vm.expectRevert("Not unlocked");
+        staking.unstake();
+    }
+
+    function testCannotUnstakeTwice() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        vm.warp(block.timestamp + 91 days);
+        vm.prank(user);
+        staking.unlock();
+        vm.prank(user);
+        staking.unstake();
+
+        vm.prank(user);
+        vm.expectRevert("Not unlocked");
+        staking.unstake();
+    }
+}
