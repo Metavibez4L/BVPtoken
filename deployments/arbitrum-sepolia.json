@@ -1,32 +1,32 @@
 {
   "network": "arbitrum-sepolia",
   "chainId": 421614,
-  "deployer": "0x8B79c656DFE9Ab86cDF4D270eE0910753b94368c",
+  "deployer": "0x8B79c656DFE9Ab86cDF4d270eE0910753b94368c",
   "contracts": {
     "BVPToken": {
-      "address": "0x6450A13E72f0999dC86A419af219C79738172318",
+      "address": "0x92c63EF7A81965c6C595AC4dF69a387ecd356Fe3",
       "verified": true
     },
     "BVPStaking": {
-      "address": "0x027e0a596b2370064c91ccA0C7A48a39858Bd082",
+      "address": "0x83DBB51Dee96A70ce48DDb05f7230CcD69D698FE",
       "verified": true
     }
   },
   "allocationRecipients": {
-    "PublicSale": "0x3666FA58D081c4ec1EA94BD910E32A239c7bDdaa",
-    "Operations": "0x104104eceF7eFf06707a5E063AaB37Dea7167E4d",
-    "Presale": "0xd70603695f137428A6b73b0Ab37F793951C36fC0",
-    "FoundersAndTeam": "0x60c8309777C5dd9DC4e9C5089eE6C8F2D9477588",
-    "Marketing": "0x672878a0F05C37fe8568f7D30aEC342f26386957",
-    "Advisors": "0x6E6DCF0612c5b28e871377218f09f53Af58182f5",
-    "Treasury": "0x3c3B380672B9b6B35dA9C6e91D39d39BD76264A9",
-    "Liquidity": "0x6fEDdf409a251468AfD821f1af3f62f04bEE40b4"
+    "PublicSale": "0x0aE398b8d97c61Aa62f94E410d41C71992d107Ee",
+    "Operations": "0x3A60b07d31cb9436810A2aE4c842F2762fa4114B",
+    "Presale": "0x73715c6751aE4baeDDa3f0ae0A9b8C77444B3696",
+    "FoundersAndTeam": "0xf6e353e1D97615d38200A576Ae0011f96Ad59D25",
+    "Marketing": "0x0Ba15d9572ed6897db101fbF41b311bfdb5010a3",
+    "Advisors": "0x11E71f5b379af2b79c7e751b6435Ca29c3805Ec9",
+    "Treasury": "0xf698e151cFDb7138Fb5F311739865f9435Ee44d6",
+    "Liquidity": "0x5Fd8fDcc9F225D246f863F3a5A0e43005C438270"
   },
   "verification": {
     "arbiscan": true,
     "urls": {
-      "BVPToken": "https://sepolia.arbiscan.io/address/0x6450A13E72f0999dC86A419af219C79738172318#code",
-      "BVPStaking": "https://sepolia.arbiscan.io/address/0x027e0a596b2370064c91ccA0C7A48a39858Bd082#code"
+      "BVPToken": "https://sepolia.arbiscan.io/address/0x92c63EF7A81965c6C595AC4dF69a387ecd356Fe3#code",
+      "BVPStaking": "https://sepolia.arbiscan.io/address/0x83DBB51Dee96A70ce48DDb05f7230CcD69D698FE#code"
     }
   }
 }
