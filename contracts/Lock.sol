@@ -5,8 +5,13 @@ pragma solidity ^0.8.29;
 // import "hardhat/console.sol";
 
 contract Lock {
-    uint public unlockTime;
-    address payable public owner;
+    /// @notice Timestamp after which the funds can be withdrawn
+    /// @dev Marked as immutable to save gas (set once during construction)
+    uint public immutable unlockTime;
+
+    /// @notice Owner of the contract, authorized to withdraw after unlock
+    /// @dev Marked as immutable for gas efficiency
+    address payable public immutable owner;
 
     event Withdrawal(uint amount, uint when);
 
@@ -21,14 +26,12 @@ contract Lock {
     }
 
     function withdraw() public {
-        // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
         // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
 
         require(block.timestamp >= unlockTime, "You can't withdraw yet");
         require(msg.sender == owner, "You aren't the owner");
 
         emit Withdrawal(address(this).balance, block.timestamp);
-
         owner.transfer(address(this).balance);
     }
 }
