@@ -4,11 +4,11 @@
   "deployer": "0x8B79c656DFE9Ab86cDF4d270eE0910753b94368c",
   "contracts": {
     "BVPToken": {
-      "address": "0x92c63EF7A81965c6C595AC4dF69a387ecd356Fe3",
+      "address": "0x159C3Dcc12841951a13e4a21459A90011C910236",
       "verified": true
     },
     "BVPStaking": {
-      "address": "0x83DBB51Dee96A70ce48DDb05f7230CcD69D698FE",
+      "address": "0x305E61450db56e1a5e8166E5e83Eb5643A03592C",
       "verified": true
     }
   },
@@ -25,8 +25,8 @@
   "verification": {
     "arbiscan": true,
     "urls": {
-      "BVPToken": "https://sepolia.arbiscan.io/address/0x92c63EF7A81965c6C595AC4dF69a387ecd356Fe3#code",
-      "BVPStaking": "https://sepolia.arbiscan.io/address/0x83DBB51Dee96A70ce48DDb05f7230CcD69D698FE#code"
+      "BVPToken": "https://sepolia.arbiscan.io/address/0x159C3Dcc12841951a13e4a21459A90011C910236#code",
+      "BVPStaking": "https://sepolia.arbiscan.io/address/0x305E61450db56e1a5e8166E5e83Eb5643A03592C#code"
     }
   }
 }
