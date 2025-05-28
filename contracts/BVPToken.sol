@@ -1,33 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 
 /// @title Big Vision Pictures Token (BVP)
-/// @notice ERC-20 token representing ownership and utility within the BVP ecosystem.
-///         Upon deployment, mints a fixed supply of 1,000,000,000 BVP tokens (with 18 decimals)
-///         and distributes them across predefined allocation categories:
-///         - 30% Public Sale
-///         - 20% Operations
-///         - 10% Presale
-///         - 10% Founders & Team
-///         - 15% Marketing
-///         -  5% Advisors
-///         -  5% Treasury Hold
-///         -  5% Liquidity
-contract BVPToken is ERC20 {
-    /// @dev Hard cap of total token supply (1 billion tokens, scaled to 18 decimals)
-    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 1e18;
+/// @notice ERC-20 token with capped supply, anti-whale TX/wallet limits, and fixed allocation
+contract BVPToken is ERC20Capped {
+    uint256 public immutable MAX_TX;
+    uint256 public immutable MAX_WALLET;
 
-    /// @notice Deploys the BVP token and mints fixed allocations to given wallet addresses
-    /// @param publicSale_ Address to receive the 30% public sale allocation
-    /// @param operations_ Address to receive the 20% operations allocation
-    /// @param presale_ Address to receive the 10% presale allocation
-    /// @param foundersAndTeam_ Address to receive the 10% founders & team allocation
-    /// @param marketing_ Address to receive the 15% marketing allocation
-    /// @param advisors_ Address to receive the 5% advisor allocation
-    /// @param treasury_ Address to receive the 5% treasury hold allocation
-    /// @param liquidity_ Address to receive the 5% liquidity allocation
+    mapping(address => bool) public isExcludedFromLimits;
+
     constructor(
         address publicSale_,
         address operations_,
@@ -37,28 +20,45 @@ contract BVPToken is ERC20 {
         address advisors_,
         address treasury_,
         address liquidity_
-    ) ERC20("Big Vision Pictures Token", "BVP") {
-        // Validate that all input addresses are non-zero to prevent misallocation
-        require(
-            publicSale_        != address(0) &&
-            operations_        != address(0) &&
-            presale_           != address(0) &&
-            foundersAndTeam_   != address(0) &&
-            marketing_         != address(0) &&
-            advisors_          != address(0) &&
-            treasury_          != address(0) &&
-            liquidity_         != address(0),
-            "ZERO_ADDRESS"
-        );
+    )
+        ERC20("Big Vision Pictures Token", "BVP")
+        ERC20Capped(1_000_000_000 * 1e18)
+    {
+        MAX_TX = 10_000_000 * 1e18;
+        MAX_WALLET = 20_000_000 * 1e18;
 
-        // Mint token allocations to each designated address
-        _mint(publicSale_,       MAX_SUPPLY * 30 / 100);  // 30%
-        _mint(operations_,       MAX_SUPPLY * 20 / 100);  // 20%
-        _mint(presale_,          MAX_SUPPLY * 10 / 100);  // 10%
-        _mint(foundersAndTeam_,  MAX_SUPPLY * 10 / 100);  // 10%
-        _mint(marketing_,        MAX_SUPPLY * 15 / 100);  // 15%
-        _mint(advisors_,         MAX_SUPPLY * 5  / 100);  // 5%
-        _mint(treasury_,         MAX_SUPPLY * 5  / 100);  // 5%
-        _mint(liquidity_,        MAX_SUPPLY * 5  / 100);  // 5%
+        _update(address(0), publicSale_, cap() * 30 / 100);
+        _update(address(0), operations_, cap() * 20 / 100);
+        _update(address(0), presale_, cap() * 10 / 100);
+        _update(address(0), foundersAndTeam_, cap() * 10 / 100);
+        _update(address(0), marketing_, cap() * 15 / 100);
+        _update(address(0), advisors_, cap() * 5 / 100);
+        _update(address(0), treasury_, cap() * 5 / 100);
+        _update(address(0), liquidity_, cap() * 5 / 100);
+
+        isExcludedFromLimits[publicSale_] = true;
+        isExcludedFromLimits[operations_] = true;
+        isExcludedFromLimits[liquidity_] = true;
+        isExcludedFromLimits[treasury_] = true;
+    }
+
+    /// @dev Required override to enforce cap and custom limits during transfers/mints
+    function _update(address from, address to, uint256 amount) internal override {
+        if (
+            from != address(0) &&
+            to != address(0) &&
+            !isExcludedFromLimits[from] &&
+            !isExcludedFromLimits[to]
+        ) {
+            require(amount <= MAX_TX, "TX_LIMIT: exceeds max tx");
+            require(balanceOf(to) + amount <= MAX_WALLET, "WALLET_LIMIT: exceeds max wallet");
+        }
+
+        super._update(from, to, amount);
+    }
+
+    /// @notice Testnet helper to set excluded addresses (disable in production)
+    function setExcluded(address account, bool excluded) external {
+        isExcludedFromLimits[account] = excluded;
     }
 }
