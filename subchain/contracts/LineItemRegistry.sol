@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import { AccessControl } from "openzeppelin-contracts/contracts/access/AccessControl.sol";
+import { AccessControl } from "openzeppelin-contracts/access/AccessControl.sol";
 
 /// @title LineItemRegistry
 /// @notice Tracks budgeted line items and actual spend for each project.

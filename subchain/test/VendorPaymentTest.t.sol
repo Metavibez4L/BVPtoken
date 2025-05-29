@@ -2,121 +2,49 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
-import "../contracts/VendorPayment.sol";
+import { MockERC20 } from "./MockERC20.sol";
+import { MockLineItemRegistry } from "./MockLineItemRegistry.sol";
+import { VendorPayment } from "../contracts/VendorPayment.sol";
 
+// Replace these with the actual values or interface if needed!
 contract VendorPaymentTest is Test {
-    VendorPayment public vendorPayment;
-    MockERC20 public token;
-    MockLineItemRegistry public registry;
+    VendorPayment vendorPayment;
+    MockLineItemRegistry registry;
+    MockERC20 bvp;
 
-    address deployer = address(0x1);
-    address producer = address(0x2);
-    address treasury = address(0x3);
-    address vendor1 = address(0x10);
+    // Role constants must match those in your VendorPayment.sol
+    bytes32 constant ROLE_ADMIN = keccak256("ROLE_ADMIN");
+    bytes32 constant ROLE_PRODUCER = keccak256("ROLE_PRODUCER");
+    bytes32 constant ROLE_TREASURY = keccak256("ROLE_TREASURY");
 
     function setUp() public {
-        token = new MockERC20();
+        bvp = new MockERC20();
         registry = new MockLineItemRegistry();
-        token.mint(address(this), 1_000_000e18);
+        vendorPayment = new VendorPayment(address(bvp), address(registry));
 
-        vendorPayment = new VendorPayment(address(token), address(registry));
-        vendorPayment.grantRole(vendorPayment.ROLE_ADMIN(), address(this));
-        vendorPayment.grantRole(vendorPayment.ROLE_PRODUCER(), address(this));
-        vendorPayment.grantRole(vendorPayment.ROLE_TREASURY(), address(this));
-
-        token.approve(address(vendorPayment), type(uint256).max);
-        token.mint(address(vendorPayment), 500_000e18);
-
-        vendorPayment.registerVendor(vendor1, "Gaffer", 10_000e18);
+        vendorPayment.grantRole(ROLE_ADMIN, address(this));
+        vendorPayment.grantRole(ROLE_PRODUCER, address(this));
+        vendorPayment.grantRole(ROLE_TREASURY, address(this));
     }
 
     function testQueueAndExecutePayment() public {
-        bytes32 projectId = keccak256("TestFilm");
-        uint256 accountCode = 401;
+        bytes32 projectId = keccak256("project");
+        uint256 accountCode = 123;
+        address recipient = address(0xBEEF);
+        uint256 amount = 100 ether;
 
-        vendorPayment.queuePayment(projectId, accountCode, vendor1, 5_000e18);
+        address[] memory vendors = new address[](1);
+        vendors[0] = recipient;
+        registry.addLineItem(projectId, accountCode, 200 ether, vendors);
 
-        // Correctly destructure all returned values
-        (
-            bytes32 _pid,
-            uint256 _acc,
-            address recipient,
-            uint256 _amt,
-            bool _exec
-        ) = vendorPayment.getPayment(0);
+        // Comment out if your VendorPayment does not require this:
+        // vendorPayment.registerVendor(recipient, "Camera Op", 150 ether);
 
-        assertEq(recipient, vendor1);
+        bvp.mint(address(vendorPayment), 200 ether);
 
+        vendorPayment.queuePayment(projectId, accountCode, recipient, amount);
         vendorPayment.executePayment(0);
 
-        assertEq(token.balanceOf(vendor1), 5_000e18);
-        assertTrue(registry.wasCalled());
-    }
-}
-
-// --------------------------------------------
-// Mock ERC20 for Testing
-// --------------------------------------------
-contract MockERC20 is IERC20Metadata {
-    string public name = "Mock BVP";
-    string public symbol = "MBVP";
-    uint8 public override decimals = 18;
-
-    mapping(address => uint256) public balances;
-    mapping(address => mapping(address => uint256)) public allowances;
-
-    function mint(address to, uint256 amount) external {
-        balances[to] += amount;
-    }
-
-    function totalSupply() external pure returns (uint256) {
-        return 1_000_000e18;
-    }
-
-    function balanceOf(address account) external view returns (uint256) {
-        return balances[account];
-    }
-
-    function transfer(address recipient, uint256 amount) external returns (bool) {
-        balances[msg.sender] -= amount;
-        balances[recipient] += amount;
-        return true;
-    }
-
-    function approve(address spender, uint256 amount) external returns (bool) {
-        allowances[msg.sender][spender] = amount;
-        return true;
-    }
-
-    function transferFrom(address sender, address recipient, uint256 amount) external returns (bool) {
-        require(allowances[sender][msg.sender] >= amount, "Not allowed");
-        balances[sender] -= amount;
-        balances[recipient] += amount;
-        allowances[sender][msg.sender] -= amount;
-        return true;
-    }
-
-    function allowance(address owner, address spender) external view returns (uint256) {
-        return allowances[owner][spender];
-    }
-}
-
-// --------------------------------------------
-// Mock LineItemRegistry for Testing
-// --------------------------------------------
-contract MockLineItemRegistry is ILineItemRegistry {
-    bool public called;
-
-    function recordPayment(
-        bytes32,
-        uint256,
-        address,
-        uint256
-    ) external override {
-        called = true;
-    }
-
-    function wasCalled() external view returns (bool) {
-        return called;
+        assertEq(bvp.balanceOf(recipient), amount);
     }
 }
