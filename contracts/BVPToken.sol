@@ -11,6 +11,13 @@ contract BVPToken is ERC20Capped {
 
     mapping(address => bool) public isExcludedFromLimits;
 
+    address private immutable _owner;
+
+    modifier onlyOwner() {
+        require(msg.sender == _owner, "Not owner");
+        _;
+    }
+
     constructor(
         address publicSale_,
         address operations_,
@@ -24,10 +31,11 @@ contract BVPToken is ERC20Capped {
         ERC20("Big Vision Pictures Token", "BVP")
         ERC20Capped(1_000_000_000 * 1e18)
     {
+        _owner = msg.sender;
+
         MAX_TX = 10_000_000 * 1e18;
         MAX_WALLET = 20_000_000 * 1e18;
 
-        // Use _mint instead of _update to reduce gas during deployment
         _mint(publicSale_,       cap() * 30 / 100);
         _mint(operations_,       cap() * 20 / 100);
         _mint(presale_,          cap() * 10 / 100);
@@ -37,14 +45,12 @@ contract BVPToken is ERC20Capped {
         _mint(treasury_,         cap() * 5  / 100);
         _mint(liquidity_,        cap() * 5  / 100);
 
-        // Exclude strategic/system wallets from anti-whale enforcement
         isExcludedFromLimits[publicSale_] = true;
         isExcludedFromLimits[operations_] = true;
         isExcludedFromLimits[liquidity_]  = true;
         isExcludedFromLimits[treasury_]   = true;
     }
 
-    /// @dev Overrides transfer logic to enforce TX and wallet limits unless excluded
     function _update(address from, address to, uint256 amount) internal override {
         if (
             from != address(0) &&
@@ -55,11 +61,13 @@ contract BVPToken is ERC20Capped {
             require(amount <= MAX_TX, "TX_LIMIT: exceeds max tx");
             require(balanceOf(to) + amount <= MAX_WALLET, "WALLET_LIMIT: exceeds max wallet");
         }
+
         super._update(from, to, amount);
     }
 
-    /// @dev Optional dev/testing-only function to manually update exclusion list
-    function setExcluded(address account, bool excluded) external {
+    /// @notice Admin function to manage anti-whale exclusion list
+    /// @dev Only callable by the original deployer
+    function setExcluded(address account, bool excluded) external onlyOwner {
         isExcludedFromLimits[account] = excluded;
     }
 }
