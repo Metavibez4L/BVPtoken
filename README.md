@@ -22,8 +22,6 @@ Token-Based Studio Funding: All productions, facilities, and talent pipelines ar
 
 Staking for Access (Not Rewards): Tiered experiential staking grants real-world access—red carpet premieres, set visits, and cameo appearances—with no inflationary emissions.
 
-DAO-Controlled Treasury: All treasury disbursements are governed by on-chain votes, with fee revenue auto-locked and cliff-vested before usage.
-
 DeFi Integration: Seamless access to Aave, Uniswap, and GMX enables liquidity incentives, ticket financing, and programmable fan governance.
 
 🔁 Subchain Rebate-Only Fee Architecture
