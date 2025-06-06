@@ -1,19 +1,28 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.29;
 
-/// @title MockInbox
-/// @notice Mocks Arbitrum's Inbox contract for local testing
-contract MockInbox {
+import "../bridge/IInbox.sol";
+
+/// @notice Mock Arbitrum Inbox used for testing retryable tickets
+contract MockInbox is IInbox {
     event RetryableTicketCreated(address to, bytes data);
 
     function createRetryableTicket(
         address to,
-        uint256, uint256,
-        address, address,
-        uint256, uint256,
+        uint256,
+        uint256,
+        address,
+        address,
+        uint256,
+        uint256,
         bytes calldata data
-    ) external payable returns (uint256) {
+    ) external payable override returns (uint256) {
         emit RetryableTicketCreated(to, data);
         return 1;
+    }
+
+    /// @dev Testing-only manual withdrawal. Not used in production.
+    function withdraw() external {
+        payable(msg.sender).transfer(address(this).balance);
     }
 }
