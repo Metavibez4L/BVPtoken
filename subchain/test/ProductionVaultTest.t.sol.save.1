@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import "forge-std/Test.sol";
 import { ProductionVault } from "../contracts/ProductionVault.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract MockERC20 is IERC20Metadata {
     string public constant name = "MockBVP";
@@ -56,27 +57,7 @@ contract ProductionVaultTest is Test {
     uint256[] internal milestones;
     address[] internal approvers;
 
-    function setUp() public {
-        token = new MockERC20();
-        vault = new ProductionVault(address(token));
-
-        token.mint(admin, 1_000_000 ether);
-
-        vm.prank(admin);
-        token.approve(address(vault), 1_000_000 ether);
-
-        // address(this) is the deployer and has DEFAULT_ADMIN_ROLE by default
-        vault.grantRole(ROLE_ADMIN, admin);
-
-        projectId = keccak256("project1");
-
-        milestones = [uint256(300 ether), 700 ether];
-        approvers = [approver1, approver2];
-
-        vm.startPrank(admin);
-        vault.createProject(projectId, "Test Project", 1000 ether, milestones, producer, approvers);
-        vm.stopPrank();
-    }
+    
 
     function testApproveMilestoneAndRelease() public {
         vm.prank(approver1);
