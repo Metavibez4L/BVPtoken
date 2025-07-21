@@ -1,19 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "src/BVPStaking.sol";
-import "src/BVPToken.sol";
+import "bvp/BVPStaking.sol";
+import "bvp/BVPToken.sol";
 
-/// @title BVPStakingGasTest
-/// @notice Gas benchmark tests for staking, unlocking, and unstaking operations
-contract BVPStakingGasTest is Test {
+/// @title BVPStakingInvariantsTest
+/// @notice Minimal test suite for invariant checks on staking behavior
+/// @dev Focuses on ensuring that preconditions (e.g., unlock before unstake) are enforced
+contract BVPStakingInvariantsTest is Test {
     BVPStaking public staking;
     BVPToken public token;
 
-    address public user = address(0x123); // Test user for staking actions
+    address public user = address(0x123); // User who performs stake/unstake operations
 
-    // Token allocation addresses; only publicSale receives full supply
+    // Token allocation wallets; only publicSale receives full supply in this context
     address public publicSale       = address(this);
     address public operations       = address(0x1);
     address public presale          = address(0x2);
@@ -23,7 +24,7 @@ contract BVPStakingGasTest is Test {
     address public treasury         = address(0x6);
     address public liquidity        = address(0x7);
 
-    /// @notice Deploys token and staking contracts and funds the test user
+    /// @notice Deploys contracts, transfers tokens, and performs initial stake
     function setUp() public {
         // Deploy token and staking contracts
         token = new BVPToken(
@@ -39,29 +40,19 @@ contract BVPStakingGasTest is Test {
 
         staking = new BVPStaking(address(token));
 
-        // Transfer test tokens to user and approve staking
+        // Fund user and approve staking contract
         token.transfer(user, 1_000_000e18);
         vm.prank(user);
         token.approve(address(staking), 1_000_000e18);
-    }
 
-    /// @notice Measures gas for a 3-month stake operation
-    function testGasStake3M() public {
+        // Stake 100,000 tokens for 3 months
         vm.prank(user);
         staking.stake3Months(100_000e18);
     }
 
-    /// @notice Measures gas for unlocking and unstaking after the full lock period
-    function testGasUnlockAndUnstake() public {
-        vm.prank(user);
-        staking.stake3Months(100_000e18);
-
-        // Advance time beyond 3-month lock
-        vm.warp(block.timestamp + 91 days);
-
-        vm.prank(user);
-        staking.unlock();
-
+    /// @notice Ensures a user cannot unstake before first unlocking their stake
+    function testCannotUnstakeBeforeUnlock() public {
+        vm.expectRevert("Not unlocked");
         vm.prank(user);
         staking.unstake();
     }
