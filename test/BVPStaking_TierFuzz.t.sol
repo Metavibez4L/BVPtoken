@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "src/BVPStaking.sol";
-import "src/BVPToken.sol";
+import "bvp/BVPStaking.sol";
+import "bvp/BVPToken.sol";
 
 /// @title BVPStakingTierFuzzTest
 /// @notice Fuzz test for verifying tier classification based on staked amount

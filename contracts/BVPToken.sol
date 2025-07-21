@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 
 /// @title Big Vision Pictures Token (BVP)
 /// @notice ERC-20 token with capped supply, fixed allocations, and anti-whale limits.
 contract BVPToken is ERC20Capped {
-    uint256 public immutable MAX_TX;
-    uint256 public immutable MAX_WALLET;
+    uint256 public immutable maxTx;
+    uint256 public immutable maxWallet;
 
     mapping(address => bool) public isExcludedFromLimits;
 
@@ -33,8 +33,8 @@ contract BVPToken is ERC20Capped {
     {
         _owner = msg.sender;
 
-        MAX_TX = 10_000_000 * 1e18;
-        MAX_WALLET = 20_000_000 * 1e18;
+        maxTx = 10_000_000 * 1e18;
+        maxWallet = 20_000_000 * 1e18;
 
         _mint(publicSale_,       cap() * 30 / 100);
         _mint(operations_,       cap() * 20 / 100);
@@ -51,18 +51,23 @@ contract BVPToken is ERC20Capped {
         isExcludedFromLimits[treasury_]   = true;
     }
 
-    function _update(address from, address to, uint256 amount) internal override {
+    /// @dev Enforces anti-whale limits before transfer
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override {
+        super._beforeTokenTransfer(from, to, amount);
+
         if (
             from != address(0) &&
             to != address(0) &&
             !isExcludedFromLimits[from] &&
             !isExcludedFromLimits[to]
         ) {
-            require(amount <= MAX_TX, "TX_LIMIT: exceeds max tx");
-            require(balanceOf(to) + amount <= MAX_WALLET, "WALLET_LIMIT: exceeds max wallet");
+            require(amount <= maxTx, "TX_LIMIT: exceeds max tx");
+            require(balanceOf(to) + amount <= maxWallet, "WALLET_LIMIT: exceeds max wallet");
         }
-
-        super._update(from, to, amount);
     }
 
     /// @notice Admin function to manage anti-whale exclusion list

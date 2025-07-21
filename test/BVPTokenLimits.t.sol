@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "src/BVPToken.sol";
+import "bvp/BVPToken.sol";
 
 /// @title BVPTokenLimitsTest
 /// @notice Tests max TX (1%) and max wallet (2%) limits for BVPToken

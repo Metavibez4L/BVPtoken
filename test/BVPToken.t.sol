@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "src/BVPToken.sol";
+import "bvp/BVPToken.sol";
 
 /// @title BVPTokenTest
 /// @notice Unit tests for verifying BVPToken initial distribution and basic transfers using Foundry.
