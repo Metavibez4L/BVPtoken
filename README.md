@@ -13,8 +13,6 @@ Custom Gas Token: BVPToken doubles as the subchain's native gas currency.
 
 ERC-4337 Support: Full account abstraction for gasless UX and meta-transactions.
 
-L3 Modules: High-volume NFT mints, gamified fan experiences, and experimental AI content generators can be deployed as L3 chains atop the core subchain.
-
 🏗 Full On-Chain Film Production Stack
 Our Arbitrum-native infrastructure replaces outdated studio systems with transparent smart contracts and modular DeFi mechanics:
 
