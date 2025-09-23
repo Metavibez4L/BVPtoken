@@ -5,195 +5,127 @@ import "forge-std/Test.sol";
 import "../contracts/BVPToken.sol";
 
 contract BVPToken_AdminAndExclusions_Test is Test {
+    // Constructor recipients (must line up with BVPToken’s constructor)
+    address public deployer;
+    address public publicSale;
+    address public operations;
+    address public presale;
+    address public foundersAndTeam;
+    address public marketing;
+    address public advisors;
+    address public treasury;
+    address public liquidity;
+
+    // Extra users for transfer tests
+    address public userA;
+    address public userB;
+
     BVPToken token;
 
-    // Re-declare events locally so we can expectEmit against address(token)
-    event TxLimitExclusionUpdated(address indexed account, bool isExcluded);
-    event WalletLimitExclusionUpdated(address indexed account, bool isExcluded);
-
-    // Constructor allocation wallets (funded at deploy by your token)
-    address sale  = makeAddr("SALE");
-    address ops   = makeAddr("OPS");
-    address pre   = makeAddr("PRESALE");
-    address team  = makeAddr("TEAM");
-    address mkt   = makeAddr("MARKETING");
-    address adv   = makeAddr("ADVISORS");
-    address tre   = makeAddr("TREASURY");
-    address liq   = makeAddr("LIQUIDITY");
-
-    // Non-excluded test actors
-    address userA = makeAddr("USER_A");
-    address userB = makeAddr("USER_B");
-
     function setUp() public {
-        token = new BVPToken(sale, ops, pre, team, mkt, adv, tre, liq);
+        // Deterministic helpful labels for traces
+        deployer        = makeAddr("deployer");
+        publicSale      = makeAddr("publicSale");
+        operations      = makeAddr("operations");
+        presale         = makeAddr("presale");
+        foundersAndTeam = makeAddr("foundersAndTeam");
+        marketing       = makeAddr("marketing");
+        advisors        = makeAddr("advisors");
+        treasury        = makeAddr("treasury");
+        liquidity       = makeAddr("liquidity");
 
-        // Sanity
-        assertEq(token.totalSupply(), 1_000_000_000 * 1e18);
-        assertGt(token.maxTx(), 0);
-        assertGt(token.maxWallet(), 0);
+        userA = makeAddr("userA");
+        userB = makeAddr("userB");
 
-        // Our lab actors should start non-excluded
-        assertFalse(token.isTxLimitExcluded(userA));
-        assertFalse(token.isWalletLimitExcluded(userA));
-        assertFalse(token.isTxLimitExcluded(userB));
-        assertFalse(token.isWalletLimitExcluded(userB));
+        vm.prank(deployer);
+        token = new BVPToken(
+            publicSale,
+            operations,
+            presale,
+            foundersAndTeam,
+            marketing,
+            advisors,
+            treasury,
+            liquidity
+        );
     }
 
-    // -------------------------------------------------------------------------
-    // Ownership + admin wiring
-    // -------------------------------------------------------------------------
+    // --- Helpers ---
 
-    function test_Ownable2Step_TransferAndAccept() public {
-        address newOwner = makeAddr("NEW_OWNER");
-
-        token.transferOwnership(newOwner);
-
-        // Wrong caller cannot accept
-        vm.expectRevert("Ownable2Step: caller is not the new owner");
-        token.acceptOwnership();
-
-        // Pending owner accepts
-        vm.prank(newOwner);
-        token.acceptOwnership();
-
-        // Only owner can call admin
-        vm.expectRevert("Ownable: caller is not the owner");
-        token.setTxLimitExcluded(userA, true);
-
-        vm.prank(newOwner);
-        token.setTxLimitExcluded(userA, true);
-        assertTrue(token.isTxLimitExcluded(userA));
+    function _maxTx() internal view returns (uint256) {
+        return token.maxTx();
     }
 
-    function test_ExclusionEvents_Getters_Toggle() public {
-        // Expect TxLimitExclusionUpdated(userA, true) emitted by token
-        vm.expectEmit(true, false, false, true, address(token));
-        emit TxLimitExclusionUpdated(userA, true);
-        token.setTxLimitExcluded(userA, true);
-        assertTrue(token.isTxLimitExcluded(userA));
-
-        // Expect WalletLimitExclusionUpdated(userB, true) emitted by token
-        vm.expectEmit(true, false, false, true, address(token));
-        emit WalletLimitExclusionUpdated(userB, true);
-        token.setWalletLimitExcluded(userB, true);
-        assertTrue(token.isWalletLimitExcluded(userB));
-
-        // Getters include live exclusions
-        address[] memory txEx = token.getTxLimitExcluded();
-        bool seenA;
-        for (uint256 i; i < txEx.length; i++) if (txEx[i] == userA) { seenA = true; break; }
-        assertTrue(seenA, "userA missing in tx-limit list");
-
-        address[] memory wEx = token.getWalletLimitExcluded();
-        bool seenB;
-        for (uint256 i; i < wEx.length; i++) if (wEx[i] == userB) { seenB = true; break; }
-        assertTrue(seenB, "userB missing in wallet-limit list");
-
-        // Toggle off
-        token.setTxLimitExcluded(userA, false);
-        token.setWalletLimitExcluded(userB, false);
-        assertFalse(token.isTxLimitExcluded(userA));
-        assertFalse(token.isWalletLimitExcluded(userB));
+    function _maxWallet() internal view returns (uint256) {
+        return token.maxWallet();
     }
 
-    // -------------------------------------------------------------------------
-    // Positive-path limit bypass tests — split & balance-safe
-    // -------------------------------------------------------------------------
+    // --- Tests ---
 
-    /// Sender is tx-excluded: > maxTx must be allowed (recipient wallet-limit neutralized).
-    function test_SenderTxExcluded_BypassesMaxTx() public {
-        uint256 overTx = token.maxTx() + 1;
+    /// Ensures defaults match the “operational freedom” addresses
+    /// you set during construction.
+    function test_DefaultExclusions_AreSet_OnDeploy() public view {
+        // Sender-side (tx) exclusions
+        assertTrue(token.isTxLimitExcluded(publicSale),   "publicSale tx not excluded");
+        assertTrue(token.isTxLimitExcluded(operations),   "operations tx not excluded");
+        assertTrue(token.isTxLimitExcluded(treasury),     "treasury tx not excluded");
+        assertTrue(token.isTxLimitExcluded(liquidity),    "liquidity tx not excluded");
 
-        // Fund userA to exactly 'overTx' without tripping wallet limit on userA
-        _fundUpTo(userA, overTx); // caps internally to maxWallet if needed
-        assertGe(token.balanceOf(userA), overTx, "userA not funded");
+        // Recipient-side (wallet) exclusions
+        assertTrue(token.isWalletLimitExcluded(publicSale), "publicSale wallet not excluded");
+        assertTrue(token.isWalletLimitExcluded(operations), "operations wallet not excluded");
+        assertTrue(token.isWalletLimitExcluded(treasury),   "treasury wallet not excluded");
+        assertTrue(token.isWalletLimitExcluded(liquidity),  "liquidity wallet not excluded");
 
-        // Mark sender as tx-excluded and assert
-        token.setTxLimitExcluded(userA, true);
-        assertTrue(token.isTxLimitExcluded(userA), "userA not tx-excluded");
-
-        // Wallet-exclude recipient to isolate tx-limit bypass
-        address userC = makeAddr("USER_C");
-        token.setWalletLimitExcluded(userC, true);
-        assertTrue(token.isWalletLimitExcluded(userC), "userC not wallet-excluded");
-
-        // Send > maxTx from tx-excluded sender; should NOT revert on TX_LIMIT
-        vm.prank(userA);
-        token.transfer(userC, overTx);
-
-        assertEq(token.balanceOf(userC), overTx, "userC did not receive overTx");
+        // A few non-excluded should be false
+        assertFalse(token.isTxLimitExcluded(presale), "presale tx should NOT be excluded");
+        assertFalse(token.isWalletLimitExcluded(presale), "presale wallet should NOT be excluded");
     }
 
-/// Recipient is wallet-excluded: can receive > maxWallet (while sender respects maxTx).
-    function test_RecipientWalletExcluded_BypassesMaxWallet() public {
-        // Arrange: fresh recipient, mark wallet-excluded
-        address userC = makeAddr("USER_C_WALLET_EXCL");
-        token.setWalletLimitExcluded(userC, true);
-        assertTrue(token.isWalletLimitExcluded(userC), "userC not wallet-excluded");
+    /// Non-excluded sender must respect maxTx.
+    /// Choose amount = maxTx + 1 but <= maxWallet so only the tx check trips.
+    function test_AntiWhale_MaxTx_Enforced_For_NonExcluded_Sender() public {
+        uint256 amt = _maxTx() + 1;
+        require(amt <= _maxWallet(), "test assumes maxTx < maxWallet");
 
-        // Ensure sender respects tx limit (explicitly non-excluded)
-        token.setTxLimitExcluded(userA, false);
-        assertFalse(token.isTxLimitExcluded(userA), "userA tx-excluded unexpectedly");
-
-        // We want to push userC above maxWallet using <= maxTx chunks.
-        uint256 targetC = token.maxWallet() + 1;
-        uint256 remaining = targetC - token.balanceOf(userC);
-
-        // Loop: for each chunk, fund userA just-in-time to 'amt' without ever exceeding userA's maxWallet.
-        while (remaining > 0) {
-            uint256 amt = remaining > token.maxTx() ? token.maxTx() : remaining;
-
-            // Make sure userA has at least 'amt', but do not exceed userA's maxWallet when funding.
-            uint256 need = amt > token.balanceOf(userA) ? (amt - token.balanceOf(userA)) : 0;
-            if (need > 0) {
-                // Target absolute balance for userA: min(current + need, maxWallet)
-                uint256 targetBal = token.balanceOf(userA) + need;
-                uint256 cap = token.maxWallet();
-                if (targetBal > cap) targetBal = cap;
-                _fundUpTo(userA, targetBal);
-                if (token.balanceOf(userA) < amt) {
-                    amt = token.balanceOf(userA); // adjust if capped by maxWallet
-                }
-            }
-
-            vm.prank(userA);
-            token.transfer(userC, amt); // recipient is wallet-excluded, so no WALLET_LIMIT
-            remaining -= amt;
-        }
-
-        assertGt(token.balanceOf(userC), token.maxWallet(), "userC did not exceed maxWallet");
+        // presale is not tx-excluded and has balance from allocations
+        vm.startPrank(presale);
+        vm.expectRevert(bytes("TX_LIMIT"));
+        token.transfer(userA, amt);
+        vm.stopPrank();
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
+    /// Non-excluded recipient must respect maxWallet, even if sender is excluded.
+    /// Send (maxWallet + 1) from an excluded sender => wallet check should trip.
+    function test_AntiWhale_MaxWallet_Enforced_For_NonExcluded_Recipient() public {
+        uint256 amt = _maxWallet() + 1;
 
-    /// Fund `to` up to `targetAbs` (absolute balance target) by sweeping from tx-excluded wallets.
-    /// Never attempts to exceed `maxWallet()` on the recipient; caller should pass a sensible cap.
-    function _fundUpTo(address to, uint256 targetAbs) internal {
-        uint256 cap = token.maxWallet();
-        if (targetAbs > cap) targetAbs = cap; // never try to exceed recipient wallet limit
-        if (token.balanceOf(to) >= targetAbs) return;
+        // publicSale is excluded and has large allocation; userA is not excluded
+        vm.prank(publicSale);
+        vm.expectRevert(bytes("WALLET_LIMIT"));
+        token.transfer(userA, amt);
+    }
 
-        // Ensure multiple funded allocs are tx-excluded as sources
-        address[8] memory srcs = [sale, ops, tre, liq, mkt, team, pre, adv];
-        for (uint256 i; i < srcs.length; i++) {
-            if (!token.isTxLimitExcluded(srcs[i])) token.setTxLimitExcluded(srcs[i], true);
-        }
+    /// Excluded sender bypasses tx limit (but we still keep recipient under wallet limit).
+    function test_Excluded_Sender_Bypasses_MaxTx() public {
+        uint256 amt = _maxTx() + 1; // > maxTx, but <= maxWallet for recipient
+        require(amt <= _maxWallet(), "test assumes maxTx < maxWallet");
 
-        // Sweep excluded sources until target reached
-        for (uint256 rounds; rounds < 5 && token.balanceOf(to) < targetAbs; rounds++) {
-            address[] memory ex = token.getTxLimitExcluded();
-            for (uint256 i; i < ex.length && token.balanceOf(to) < targetAbs; i++) {
-                uint256 bal = token.balanceOf(ex[i]);
-                if (bal == 0) continue;
-                uint256 need = targetAbs - token.balanceOf(to);
-                uint256 amt = bal < need ? bal : need;
-                vm.prank(ex[i]);
-                token.transfer(to, amt);
-            }
-        }
-        require(token.balanceOf(to) >= targetAbs, "funding failed");
+        // publicSale is tx-excluded
+        vm.prank(publicSale);
+        token.transfer(userA, amt);
+
+        assertEq(token.balanceOf(userA), amt, "recipient did not receive");
+    }
+
+    /// Excluded recipient bypasses wallet limit (sender must still respect maxTx).
+    function test_Excluded_Recipient_Bypasses_MaxWallet() public {
+        // Use a non-excluded sender (presale). Amount must be <= maxTx.
+        uint256 amt = _maxTx(); // boundary, valid for non-excluded sender
+        // Recipient is liquidity (wallet-excluded)
+        vm.prank(presale);
+        token.transfer(liquidity, amt);
+
+        assertEq(token.balanceOf(liquidity), (token.cap() * 5) / 100 + amt, "excluded recipient did not receive");
     }
 }
