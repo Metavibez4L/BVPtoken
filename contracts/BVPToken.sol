@@ -1,36 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 /// @title Big Vision Pictures Token (BVP)
-/// @notice ERC-20 token with capped supply, fixed allocations, and anti-whale limits.
-/// @dev Changes vs previous version:
-///  - Correct anti-whale semantics:
-///      • Enforce maxTx unless *sender* is tx-excluded
-///      • Enforce maxWallet on *recipient* unless recipient is wallet-excluded
-///  - Split exclusion sets: isTxLimitExcluded / isWalletLimitExcluded
-///  - Events on exclusion changes + enumerable getters
-///  - Use Ownable2Step (safer owner transfer)
-///  - Add ERC20Permit (EIP-2612)
-contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
-    // ---- Limits ----
+/// @notice Capped ERC20 with fixed genesis allocations, anti-whale limits, split exclusion lists, and EIP-2612.
+/// @dev No burn functionality is exposed (no ERC20Burnable; `_burn` never called).
+contract BVPToken is ERC20, ERC20Capped, ERC20Permit, Ownable2Step {
+    // ---------- Limits ----------
     uint256 public immutable maxTx;
     uint256 public immutable maxWallet;
 
-    // ---- Exclusions (split) ----
-    mapping(address => bool) public isTxLimitExcluded;
-    mapping(address => bool) public isWalletLimitExcluded;
+    // ---------- Exclusions (split) ----------
+    mapping(address => bool) public isTxLimitExcluded;      // sender-based tx limit bypass
+    mapping(address => bool) public isWalletLimitExcluded;  // recipient-based wallet cap bypass
 
-    // For transparent enumeration in UIs (read helpers build filtered lists)
+    // For transparent enumeration in UIs (we don't compact; we filter on read)
     address[] private _txExclusionBook;
     address[] private _walletExclusionBook;
 
-    // ---- Events ----
+    // ---------- Events ----------
     event TxLimitExclusionUpdated(address indexed account, bool isExcluded);
     event WalletLimitExclusionUpdated(address indexed account, bool isExcluded);
+
+    // ---------- Errors ----------
+    error ZeroAddress();
 
     constructor(
         address publicSale_,
@@ -43,14 +40,26 @@ contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
         address liquidity_
     )
         ERC20("Big Vision Pictures Token", "BVP")
-        ERC20Capped(1_000_000_000 * 1e18)
+        ERC20Capped(1_000_000_000 ether)
         ERC20Permit("Big Vision Pictures Token")
     {
-        // Limits (unchanged values)
-        maxTx = 10_000_000 * 1e18;
-        maxWallet = 20_000_000 * 1e18;
+        // Basic input hygiene (defense-in-depth)
+        if (
+            publicSale_ == address(0) ||
+            operations_ == address(0) ||
+            presale_ == address(0) ||
+            foundersAndTeam_ == address(0) ||
+            marketing_ == address(0) ||
+            advisors_ == address(0) ||
+            treasury_ == address(0) ||
+            liquidity_ == address(0)
+        ) revert ZeroAddress();
 
-        // Mint allocations at deploy
+        // Anti-whale limits
+        maxTx = 10_000_000 ether;     // 1% of cap per tx
+        maxWallet = 20_000_000 ether; // 2% of cap per wallet
+
+        // Genesis allocations (sum = 100% of cap)
         _mint(publicSale_,       cap() * 30 / 100);
         _mint(operations_,       cap() * 20 / 100);
         _mint(presale_,          cap() * 10 / 100);
@@ -60,9 +69,7 @@ contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
         _mint(treasury_,         cap() * 5  / 100);
         _mint(liquidity_,        cap() * 5  / 100);
 
-        // Initialize sensible defaults:
-        // - Public sale, ops, treasury, liquidity often need operational freedom.
-        // - Exempt them from both tx and wallet limits to avoid operational dead-ends.
+        // Sensible defaults: let operational wallets bypass limits to avoid dead-ends.
         _setTxLimitExcluded(publicSale_, true);
         _setTxLimitExcluded(operations_, true);
         _setTxLimitExcluded(treasury_,  true);
@@ -73,13 +80,13 @@ contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
         _setWalletLimitExcluded(treasury_,  true);
         _setWalletLimitExcluded(liquidity_, true);
 
-        // Set initial owner to deployer (Ownable2Step)
+        // Ownable2Step initial owner = deployer (handoff to multisig/timelock recommended)
         _transferOwnership(msg.sender);
     }
 
-    // -----------------------------
-    // Exclusions: admin (owner)
-    // -----------------------------
+    // ----------
+    // Admin (owner)
+    // ----------
 
     /// @notice Update tx-limit exclusion for an account (owner only).
     function setTxLimitExcluded(address account, bool excluded) external onlyOwner {
@@ -91,41 +98,17 @@ contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
         _setWalletLimitExcluded(account, excluded);
     }
 
-    function _setTxLimitExcluded(address account, bool excluded) internal {
-        if (isTxLimitExcluded[account] == excluded) {
-            emit TxLimitExclusionUpdated(account, excluded); // still emit to reflect admin intent
-            return;
-        }
-        isTxLimitExcluded[account] = excluded;
-        // track for enumeration (store once)
-        if (_notSeenInBook(_txExclusionBook, account)) {
-            _txExclusionBook.push(account);
-        }
-        emit TxLimitExclusionUpdated(account, excluded);
+    /// @notice Safer ownership transfer (defense-in-depth): disallow zero address as pending owner.
+    function transferOwnership(address newOwner) public override onlyOwner {
+        if (newOwner == address(0)) revert ZeroAddress();
+        super.transferOwnership(newOwner);
     }
 
-    function _setWalletLimitExcluded(address account, bool excluded) internal {
-        if (isWalletLimitExcluded[account] == excluded) {
-            emit WalletLimitExclusionUpdated(account, excluded);
-            return;
-        }
-        isWalletLimitExcluded[account] = excluded;
-        if (_notSeenInBook(_walletExclusionBook, account)) {
-            _walletExclusionBook.push(account);
-        }
-        emit WalletLimitExclusionUpdated(account, excluded);
-    }
+    // ----------
+    // Views (enumeration helpers for UIs)
+    // ----------
 
-    function _notSeenInBook(address[] storage book, address account) private view returns (bool) {
-        // Dedup only on first insert; we don't compact on removal.
-        // Getters build filtered lists based on the current mapping flags.
-        for (uint256 i = 0; i < book.length; i++) {
-            if (book[i] == account) return false;
-        }
-        return true;
-    }
-
-    /// @notice Enumerate current tx-limit excluded accounts (filtered).
+    /// @notice Enumerate current tx-limit excluded accounts (filtered by live mapping).
     function getTxLimitExcluded() external view returns (address[] memory live) {
         uint256 n;
         for (uint256 i = 0; i < _txExclusionBook.length; i++) {
@@ -139,7 +122,7 @@ contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
         }
     }
 
-    /// @notice Enumerate current wallet-limit excluded accounts (filtered).
+    /// @notice Enumerate current wallet-limit excluded accounts (filtered by live mapping).
     function getWalletLimitExcluded() external view returns (address[] memory live) {
         uint256 n;
         for (uint256 i = 0; i < _walletExclusionBook.length; i++) {
@@ -153,22 +136,57 @@ contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
         }
     }
 
-    // -----------------------------
+    // ----------
+    // Internal helpers
+    // ----------
+
+    function _setTxLimitExcluded(address account, bool excluded) internal {
+        if (isTxLimitExcluded[account] != excluded) {
+            isTxLimitExcluded[account] = excluded;
+            emit TxLimitExclusionUpdated(account, excluded);
+        } else {
+            // still emit to reflect admin intent (useful for off-chain sync)
+            emit TxLimitExclusionUpdated(account, excluded);
+        }
+        if (_notSeenInBook(_txExclusionBook, account)) {
+            _txExclusionBook.push(account);
+        }
+    }
+
+    function _setWalletLimitExcluded(address account, bool excluded) internal {
+        if (isWalletLimitExcluded[account] != excluded) {
+            isWalletLimitExcluded[account] = excluded;
+            emit WalletLimitExclusionUpdated(account, excluded);
+        } else {
+            emit WalletLimitExclusionUpdated(account, excluded);
+        }
+        if (_notSeenInBook(_walletExclusionBook, account)) {
+            _walletExclusionBook.push(account);
+        }
+    }
+
+    function _notSeenInBook(address[] storage book, address account) private view returns (bool) {
+        for (uint256 i = 0; i < book.length; i++) {
+            if (book[i] == account) return false;
+        }
+        return true;
+    }
+
+    // ----------
     // Transfer rules (anti-whale)
-    // -----------------------------
+    // ----------
 
     /// @dev Enforces anti-whale limits on regular transfers:
     ///      - Enforce maxTx unless sender is tx-excluded
     ///      - Enforce maxWallet on recipient unless recipient is wallet-excluded
-    ///      - Mints/burns are not subject to limits
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override {
+    ///      - Mints/Burns are not subject to limits (no burn paths exposed)
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        override
+    {
         super._beforeTokenTransfer(from, to, amount);
 
-        // Ignore mints/burns
+        // skip checks for mints/burns
         if (from == address(0) || to == address(0)) return;
 
         // Max TX: check unless sender is excluded
@@ -182,11 +200,11 @@ contract BVPToken is ERC20Capped, ERC20Permit, Ownable2Step {
         }
     }
 
-    // -----------------------------
-    // Solidity inheritance plumbing
-    // -----------------------------
+    // ----------
+    // Inheritance plumbing
+    // ----------
 
-    // ERC20Capped caps minting; ERC20Permit adds permits; no conflicting hooks in OZ 4.9.x
+    /// @dev Required by Solidity because ERC20Capped overrides ERC20._mint.
     function _mint(address account, uint256 amount)
         internal
         override(ERC20, ERC20Capped)

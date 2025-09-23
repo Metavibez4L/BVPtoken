@@ -125,7 +125,7 @@ contract BVPToken_AdminAndExclusions_Test is Test {
         assertEq(token.balanceOf(userC), overTx, "userC did not receive overTx");
     }
 
-    /// Recipient is wallet-excluded: can receive > maxWallet (while sender respects maxTx).
+/// Recipient is wallet-excluded: can receive > maxWallet (while sender respects maxTx).
     function test_RecipientWalletExcluded_BypassesMaxWallet() public {
         // Arrange: fresh recipient, mark wallet-excluded
         address userC = makeAddr("USER_C_WALLET_EXCL");
@@ -152,9 +152,8 @@ contract BVPToken_AdminAndExclusions_Test is Test {
                 uint256 cap = token.maxWallet();
                 if (targetBal > cap) targetBal = cap;
                 _fundUpTo(userA, targetBal);
-                // If still short (because cap == maxWallet), we'll send a smaller chunk first.
                 if (token.balanceOf(userA) < amt) {
-                    amt = token.balanceOf(userA); // never zero: funding guarantees some progress
+                    amt = token.balanceOf(userA); // adjust if capped by maxWallet
                 }
             }
 
