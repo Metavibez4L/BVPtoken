@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { Contract } from "ethers";
+import { Contract, parseEther } from "ethers";
 
 describe("BVPStaking", function () {
   let token: Contract;
@@ -10,7 +10,8 @@ describe("BVPStaking", function () {
   beforeEach(async () => {
     recipients = await ethers.getSigners();
 
-    token = await (await ethers.getContractFactory("BVPToken")).deploy(
+    const TokenF = await ethers.getContractFactory("BVPToken");
+    token = await TokenF.deploy(
       recipients[0].address, // Public Sale
       recipients[1].address, // Operations
       recipients[2].address, // Presale
@@ -20,20 +21,22 @@ describe("BVPStaking", function () {
       recipients[6].address, // Treasury
       recipients[7].address  // Liquidity
     );
-    await token.deployed();
+    await token.waitForDeployment(); // ✅ v6
 
-    staking = await (await ethers.getContractFactory("BVPStaking")).deploy(token.address);
-    await staking.deployed();
+    const StakingF = await ethers.getContractFactory("BVPStaking");
+    staking = await StakingF.deploy(await token.getAddress()); // or token.target
+    await staking.waitForDeployment(); // ✅ v6
 
-    await token.connect(recipients[0]).transfer(recipients[8].address, ethers.utils.parseEther("100000"));
-    await token.connect(recipients[8]).approve(staking.address, ethers.utils.parseEther("100000"));
+    // seed a user with tokens and approve staking
+    await token.connect(recipients[0]).transfer(recipients[8].address, parseEther("100000"));
+    await token.connect(recipients[8]).approve(await staking.getAddress(), parseEther("100000"));
   });
 
   it("should stake and assign Silver tier", async () => {
-    await staking.connect(recipients[8]).stake3Months(ethers.utils.parseEther("100000"));
+    await staking.connect(recipients[8]).stake3Months(parseEther("100000"));
     const stake = await staking.getStake(recipients[8].address);
 
-    expect(stake.amount.toString()).to.equal(ethers.utils.parseEther("100000").toString());
+    expect(stake.amount.toString()).to.equal(parseEther("100000").toString());
     const tier = await staking.getTierName(recipients[8].address);
     expect(tier).to.equal("Silver");
   });
