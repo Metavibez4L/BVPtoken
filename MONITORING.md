@@ -157,4 +157,18 @@
   3. If required, deploy patched contracts (V2) and plan migration.
   4. Document root cause and mitigation steps for future reference.
 
+### Implementation Notes (Configs)
+
+- The file `monitoring.config.example.json` provides a minimal, structured
+  configuration for:
+  - Mapping networks to deployment JSON files (e.g., `deployments/arbitrum-sepolia.json`,
+    `deployments/arbitrum-mainnet.json`).
+  - Defining high-level thresholds for:
+    - Large BVP transfers (as % of total supply).
+    - Large unstake waves (as % of total staked).
+  - Stubbing incident channels (Slack/Discord/email) to be filled in by ops.
+- Use this file as a starting point for wiring your actual monitoring stack
+  (Dune / Flipside / Tenderly / custom indexer) to real alert destinations.
+
+
 

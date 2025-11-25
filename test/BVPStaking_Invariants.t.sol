@@ -52,8 +52,8 @@ contract BVPStakingInvariantsTest is Test {
 
     /// @notice Ensures a user cannot unstake before first unlocking their stake
     function testCannotUnstakeBeforeUnlock() public {
-        vm.expectRevert("Not unlocked");
         vm.prank(user);
+        vm.expectRevert(BVPStaking.NotUnlocked.selector);
         staking.unstake();
     }
 }

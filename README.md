@@ -161,6 +161,14 @@ BVP isn’t just making films—it’s remaking the entertainment industry from 
 - **Test Coverage**: All tests passing with custom error support
 - **External Audit**: Recommended before mainnet deployment
 
+### Deployed Addresses
+
+See the `deployments/` directory for the most recent JSON files containing
+network, deployer, and contract addresses:
+
+- Arbitrum Sepolia (testnet): `deployments/arbitrum-sepolia.json`
+- Arbitrum mainnet: `deployments/arbitrum-mainnet.json` (once deployed)
+
 ### Security Properties
 
 1. **BVPToken**: Immutable, no admin, capped supply, anti-whale limits enforced
