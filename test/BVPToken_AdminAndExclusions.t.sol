@@ -90,7 +90,7 @@ contract BVPToken_AdminAndExclusions_Test is Test {
 
         // presale is not tx-excluded and has balance from allocations
         vm.startPrank(presale);
-        vm.expectRevert(bytes("TX_LIMIT"));
+        vm.expectRevert(BVPToken.TransferExceedsLimit.selector);
         token.transfer(userA, amt);
         vm.stopPrank();
     }
@@ -102,7 +102,7 @@ contract BVPToken_AdminAndExclusions_Test is Test {
 
         // publicSale is excluded and has large allocation; userA is not excluded
         vm.prank(publicSale);
-        vm.expectRevert(bytes("WALLET_LIMIT"));
+        vm.expectRevert(BVPToken.WalletExceedsLimit.selector);
         token.transfer(userA, amt);
     }
 

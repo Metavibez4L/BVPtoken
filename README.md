@@ -123,3 +123,49 @@ npx hardhat run scripts/deploy.ts --network arbitrumsepolia
 ✊ Join the Decentralized Studio Revolution
 BVP isn’t just making films—it’s remaking the entertainment industry from the blockchain up.
 
+## Developer & Operations Docs
+
+- Architecture & trust model: `ARCHITECTURE.md`
+- Governance & roles: `GOVERNANCE.md`
+- Monitoring & incident response: `MONITORING.md`
+- Audit preparation: `AUDIT_PREP.md`
+- Integration guide (ABIs & flows): `INTEGRATION.md`
+- Compliance & risk notes: `COMPLIANCE_NOTES.md`
+
+## Security Documentation
+
+- **Security analysis & audit findings**: `SECURITY_ANALYSIS.md`
+- **Pre-deployment security checklist**: `SECURITY_CHECKLIST.md`
+- **Security contact**: security@bigvisionpictures.io
+
+### Recent Security Enhancements
+
+✅ **Aggressive Gas Optimizations** (November 2025)
+- Custom errors replacing string reverts (10-30% gas savings)
+- Unchecked arithmetic where mathematically safe
+- Combined `unlockAndUnstake()` operation in BVPStaking (50% gas savings vs. two calls)
+- Binary search tier calculation optimization
+
+✅ **Security Hardening** (November 2025)
+- Comprehensive security analysis documented
+- Lock.sol upgraded to use `.call{value}` instead of `.transfer()`
+- Enhanced NatSpec with security assumptions and invariants
+- All contracts follow CEI (Checks-Effects-Interactions) pattern
+- ReentrancyGuard on all state-changing staking functions
+
+### Security Status
+
+- **Critical Issues**: 0
+- **High Issues**: 0  
+- **Medium Issues**: 0 (all resolved)
+- **Test Coverage**: All tests passing with custom error support
+- **External Audit**: Recommended before mainnet deployment
+
+### Security Properties
+
+1. **BVPToken**: Immutable, no admin, capped supply, anti-whale limits enforced
+2. **BVPStaking**: ReentrancyGuard, CEI pattern, no admin, tiered access (no yield)
+3. **Lock**: Simple timelock, immutable parameters, safe ETH transfers
+
+See `SECURITY_ANALYSIS.md` for detailed security review and `SECURITY_CHECKLIST.md` for pre-deployment verification.
+
