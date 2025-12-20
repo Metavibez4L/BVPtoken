@@ -1,6 +1,7 @@
 // hardhat.config.ts
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "solidity-coverage";
 import * as dotenv from "dotenv";
 dotenv.config();
 

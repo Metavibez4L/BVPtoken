@@ -19,21 +19,18 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
+          cache-dependency-path: package-lock.json
 
       - name: Install Node dependencies
-        working-directory: ./BVPtoken
         run: npm ci
 
       - name: Compile Hardhat contracts
-        working-directory: ./BVPtoken
         run: npm run compile
 
       - name: Run Hardhat tests
-        working-directory: ./BVPtoken
         run: npm test
 
       - name: Run Hardhat coverage
-        working-directory: ./BVPtoken
         run: npm run coverage
 
       - name: Install Foundry
@@ -42,11 +39,10 @@ jobs:
           version: stable
 
       - name: Run Foundry tests (root)
-        working-directory: ./BVPtoken
         run: forge test -vv
 
       - name: Run Foundry tests (subchain)
-        working-directory: ./BVPtoken/subchain
+        working-directory: ./subchain
         run: forge test -vv
 
 
