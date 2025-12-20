@@ -54,7 +54,7 @@ contract BVPStakingTierFuzzTest is Test {
         // Zero amount should revert before attempting tier logic
         if (amount == 0) {
             vm.prank(user);
-            vm.expectRevert("Zero amount");
+            vm.expectRevert(BVPStaking.ZeroAmount.selector);
             staking.stake3Months(amount);
             return;
         }

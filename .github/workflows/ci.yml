@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        working-directory: ./BVPtoken
+        run: npm ci
+
+      - name: Compile Hardhat contracts
+        working-directory: ./BVPtoken
+        run: npm run compile
+
+      - name: Run Hardhat tests
+        working-directory: ./BVPtoken
+        run: npm test
+
+      - name: Run Hardhat coverage
+        working-directory: ./BVPtoken
+        run: npm run coverage
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Run Foundry tests (root)
+        working-directory: ./BVPtoken
+        run: forge test -vv
+
+      - name: Run Foundry tests (subchain)
+        working-directory: ./BVPtoken/subchain
+        run: forge test -vv
+
+

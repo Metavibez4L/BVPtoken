@@ -1,10 +1,37 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
+/// @title Time-Locked ETH Contract
+/// @notice Simple timelock mechanism that holds ETH until a specified unlock time
+/// @dev Immutable owner and unlock time set at deployment
+///
+/// @custom:security-contact security@bigvisionpictures.io
+/// @custom:security-features
+///      - Immutable owner and unlockTime (set once in constructor)
+///      - Uses .call{value} instead of .transfer for better recipient compatibility
+///      - Access control: only owner can withdraw
+/// @custom:invariants
+///      - unlockTime > deployment timestamp (enforced in constructor)
+///      - Only owner address can successfully call withdraw()
+///      - Withdrawal only possible when block.timestamp >= unlockTime
+/// @custom:assumptions
+///      - Owner address should be EOA or contract with payable receive/fallback
+///      - No emergency unlock mechanism (by design - true timelock)
+///      - block.timestamp is reliable for time-based conditions
+/// @custom:warnings
+///      - If unlockTime is set far in future, funds are locked indefinitely
+///      - No upgrade path or admin override
+///      - Test with short periods before locking large amounts
 contract Lock {
+    // ---- Custom Errors ----
+    error UnlockTimeInPast();
+    error StillLocked();
+    error Unauthorized();
+    error TransferFailed();
+
     /// @notice Timestamp after which the funds can be withdrawn
     /// @dev Marked as immutable to save gas (set once during construction)
     uint public immutable unlockTime;
@@ -16,10 +43,7 @@ contract Lock {
     event Withdrawal(uint amount, uint when);
 
     constructor(uint _unlockTime) payable {
-        require(
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
+        if (block.timestamp >= _unlockTime) revert UnlockTimeInPast();
 
         unlockTime = _unlockTime;
         owner = payable(msg.sender);
@@ -28,10 +52,14 @@ contract Lock {
     function withdraw() public {
         // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
 
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
+        if (block.timestamp < unlockTime) revert StillLocked();
+        if (msg.sender != owner) revert Unauthorized();
 
-        emit Withdrawal(address(this).balance, block.timestamp);
-        owner.transfer(address(this).balance);
+        uint256 amount = address(this).balance;
+        emit Withdrawal(amount, block.timestamp);
+        
+        // Use .call instead of .transfer for better compatibility with contract recipients
+        (bool success, ) = owner.call{value: amount}("");
+        if (!success) revert TransferFailed();
     }
 }

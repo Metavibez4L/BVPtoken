@@ -1,4 +1,6 @@
 import { ethers, run } from "hardhat";
+import { mkdirSync, writeFileSync } from "fs";
+import { join } from "path";
 
 async function verify(address: string, args: any[]) {
   try {
@@ -57,6 +59,47 @@ async function main() {
   // === Verify both ===
   await verify(token.address, tokenArgs);
   await verify(staking.address, stakingArgs);
+
+  // === Persist deployment metadata ===
+  const outDir = join(__dirname, "..", "deployments");
+  mkdirSync(outDir, { recursive: true });
+
+  const deployment = {
+    network: "arbitrum-sepolia",
+    chainId: 421614,
+    deployer: deployer.address,
+    contracts: {
+      BVPToken: {
+        address: token.address,
+        verified: true,
+      },
+      BVPStaking: {
+        address: staking.address,
+        verified: true,
+      },
+    },
+    allocationRecipients: {
+      PublicSale: publicSale,
+      Operations: operations,
+      Presale: presale,
+      FoundersAndTeam: foundersAndTeam,
+      Marketing: marketing,
+      Advisors: advisors,
+      Treasury: treasury,
+      Liquidity: liquidity,
+    },
+    verification: {
+      arbiscan: true,
+      urls: {
+        BVPToken: `https://sepolia.arbiscan.io/address/${token.address}#code`,
+        BVPStaking: `https://sepolia.arbiscan.io/address/${staking.address}#code`,
+      },
+    },
+  };
+
+  const outPath = join(outDir, "arbitrum-sepolia.json");
+  writeFileSync(outPath, JSON.stringify(deployment, null, 2));
+  console.log(`📝 Wrote deployment metadata to deployments/arbitrum-sepolia.json`);
 }
 
 main().catch((error) => {

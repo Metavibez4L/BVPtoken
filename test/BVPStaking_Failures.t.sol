@@ -51,7 +51,7 @@ contract BVPStakingFailuresTest is Test {
     /// @notice Prevents staking zero tokens
     function testCannotStakeZeroAmount() public {
         vm.prank(user);
-        vm.expectRevert("Zero amount");
+        vm.expectRevert(BVPStaking.ZeroAmount.selector);
         staking.stake3Months(0);
     }
 
@@ -61,7 +61,7 @@ contract BVPStakingFailuresTest is Test {
         staking.stake3Months(100_000e18);
 
         vm.prank(user);
-        vm.expectRevert("Already staked");
+        vm.expectRevert(BVPStaking.AlreadyStaked.selector);
         staking.stake6Months(100_000e18);
     }
 
@@ -74,14 +74,14 @@ contract BVPStakingFailuresTest is Test {
         vm.warp(block.timestamp + 30 days);
 
         vm.prank(user);
-        vm.expectRevert("Still locked");
+        vm.expectRevert(BVPStaking.StillLocked.selector);
         staking.unlock();
     }
 
     /// @notice Prevents unlocking if no stake was ever made
     function testCannotUnlockIfNoStake() public {
         vm.prank(user);
-        vm.expectRevert("No stake");
+        vm.expectRevert(BVPStaking.NoStake.selector);
         staking.unlock();
     }
 
@@ -95,7 +95,7 @@ contract BVPStakingFailuresTest is Test {
         staking.unlock();
 
         vm.prank(user);
-        vm.expectRevert("Already unlocked");
+        vm.expectRevert(BVPStaking.AlreadyUnlocked.selector);
         staking.unlock();
     }
 
@@ -107,7 +107,7 @@ contract BVPStakingFailuresTest is Test {
         vm.warp(block.timestamp + 91 days);
 
         vm.prank(user);
-        vm.expectRevert("Not unlocked");
+        vm.expectRevert(BVPStaking.NotUnlocked.selector);
         staking.unstake();
     }
 
@@ -123,7 +123,47 @@ contract BVPStakingFailuresTest is Test {
         staking.unstake();
 
         vm.prank(user);
-        vm.expectRevert("Not unlocked");
+        vm.expectRevert(BVPStaking.NotUnlocked.selector);
         staking.unstake();
+    }
+
+    /// @notice Tests the new combined unlockAndUnstake function (happy path)
+    function testUnlockAndUnstake_Success() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        // Advance past lock period
+        vm.warp(block.timestamp + 91 days);
+
+        uint256 balBefore = token.balanceOf(user);
+
+        vm.prank(user);
+        staking.unlockAndUnstake();
+
+        uint256 balAfter = token.balanceOf(user);
+        assertEq(balAfter - balBefore, 100_000e18, "user should receive full stake back");
+
+        // Verify stake is cleared
+        (uint256 amount,,,, ) = staking.getStake(user);
+        assertEq(amount, 0, "stake should be cleared");
+    }
+
+    /// @notice Tests that unlockAndUnstake reverts if lock period hasn't expired
+    function testUnlockAndUnstake_RevertsIfStillLocked() public {
+        vm.prank(user);
+        staking.stake3Months(100_000e18);
+
+        vm.warp(block.timestamp + 30 days); // Only 30 days in
+
+        vm.prank(user);
+        vm.expectRevert(BVPStaking.StillLocked.selector);
+        staking.unlockAndUnstake();
+    }
+
+    /// @notice Tests that unlockAndUnstake reverts if no stake exists
+    function testUnlockAndUnstake_RevertsIfNoStake() public {
+        vm.prank(user);
+        vm.expectRevert(BVPStaking.NoStake.selector);
+        staking.unlockAndUnstake();
     }
 }

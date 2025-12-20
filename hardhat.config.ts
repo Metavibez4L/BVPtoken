@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.29",
+  solidity: "0.8.19",
   paths: { tests: "./hardhat-tests" },
   networks: {
     hardhat: { chainId: 31337, accounts: { count: 10 } },
@@ -13,6 +13,13 @@ const config: HardhatUserConfig = {
       url: process.env.ARB_SEPOLIA_RPC_URL || "",
       chainId: 421614,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
+    arbitrumOne: {
+      url: process.env.ARB_MAINNET_RPC_URL || "",
+      chainId: 42161,
+      accounts: process.env.MAINNET_PRIVATE_KEY
+        ? [process.env.MAINNET_PRIVATE_KEY]
+        : [],
     },
   },
   etherscan: {

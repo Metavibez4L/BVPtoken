@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+/// @notice LEGACY TEST – kept for historical reference only.
+/// @dev This file targets an older, admin-controlled BVPToken design
+///      with setters/getters and string-based revert reasons.
+///      The current production BVPToken is immutable and uses
+///      custom errors instead. This test is NOT part of the active
+///      Foundry test suite (root path, not `test/`), and should
+///      not be re-enabled without a full port to the new interface.
+
 import "forge-std/Test.sol";
 import "../contracts/BVPToken.sol";
 

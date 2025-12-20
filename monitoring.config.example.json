@@ -1,0 +1,54 @@
+{
+  "networks": {
+    "arbitrum-sepolia": {
+      "chainId": 421614,
+      "deploymentFile": "deployments/arbitrum-sepolia.json",
+      "contracts": {
+        "BVPToken": {
+          "type": "erc20",
+          "largeTransferThresholdPct": 1,
+          "walletConcentrationAlertTopN": 20
+        },
+        "BVPStaking": {
+          "type": "staking",
+          "largeUnstakeThresholdPct": 10
+        }
+      }
+    },
+    "arbitrum-mainnet": {
+      "chainId": 42161,
+      "deploymentFile": "deployments/arbitrum-mainnet.json",
+      "contracts": {
+        "BVPToken": {
+          "type": "erc20",
+          "largeTransferThresholdPct": 1,
+          "walletConcentrationAlertTopN": 20
+        },
+        "BVPStaking": {
+          "type": "staking",
+          "largeUnstakeThresholdPct": 10
+        }
+      }
+    }
+  },
+  "alerts": {
+    "critical": [
+      "largeTransferFromTreasury",
+      "largeTransferFromLiquidity"
+    ],
+    "high": [
+      "multipleLargeTransfersShortWindow",
+      "largeUnstakeWave"
+    ],
+    "medium": [
+      "newWhaleAddressAppeared"
+    ]
+  },
+  "incidentChannels": {
+    "slack": "configure-your-slack-webhook-or-channel-id-here",
+    "discord": "configure-your-discord-webhook-or-channel-id-here",
+    "email": "security@bigvisionpictures.io"
+  }
+}
+
+

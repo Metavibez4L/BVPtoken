@@ -1,13 +1,44 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity 0.8.19;
 
-import "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol"; 
 
 /// @title BVP Staking Contract
 /// @notice Allows users to stake BVP tokens with fixed lock periods to gain tier-based access privileges.
-/// @dev This contract supports three staking durations (3m, 6m, 12m) and maps stake amounts to predefined tiers.
+/// @dev Design notes:
+///      - Each address may have **at most one active stake** at a time.
+///      - Supports three fixed lock durations: 3, 6, and 12 months.
+///      - Staked amounts map to fixed, non-upgradeable tiers (Bronze → Diamond).
+///      - No rewards or yield are paid; staking is purely for access/eligibility.
+///      - Optimized: custom errors, combined operations, efficient tier calculation.
+///
+/// @custom:security-contact security@bigvisionpictures.io
+/// @custom:security-features
+///      - ReentrancyGuard on all state-changing functions
+///      - CEI (Checks-Effects-Interactions) pattern: state cleared before token transfers
+///      - No admin functions: fully decentralized post-deployment
+///      - Lock periods enforced by immutable constants and block.timestamp
+/// @custom:invariants
+///      - User can have 0 or 1 stake, never more
+///      - If stake exists: stake.amount > 0
+///      - If unlocked: block.timestamp >= stake.timestamp + stake.lockTime
+///      - Contract balance >= sum of all active stake amounts
+///      - Tier code always in range [0, 5] inclusive
+/// @custom:assumptions
+///      - BVP token address is valid ERC-20 (checked: non-zero, fails safely if invalid)
+///      - block.timestamp is reliable (consensus-based, not manipulatable by single validator)
+///      - No emergency unlock: users must wait full lock period (by design)
 contract BVPStaking is ReentrancyGuard {
+    // ---- Custom Errors ----
+    error ZeroAddress();
+    error ZeroAmount();
+    error AlreadyStaked();
+    error NoStake();
+    error AlreadyUnlocked();
+    error StillLocked();
+    error NotUnlocked();
+    error TransferFailed();
     IERC20 public immutable bvpToken;
 
     struct Stake {
@@ -34,24 +65,26 @@ contract BVPStaking is ReentrancyGuard {
     event Unstaked(address indexed user, uint256 amount);
 
     constructor(address _bvpToken) {
-        require(_bvpToken != address(0), "Zero token");
+        if (_bvpToken == address(0)) revert ZeroAddress();
         bvpToken = IERC20(_bvpToken);
     }
 
     function _stake(uint256 amount, uint256 lockTime) internal nonReentrant {
-        require(amount > 0, "Zero amount");
+        if (amount == 0) revert ZeroAmount();
 
         Stake storage s = stakes[msg.sender];
-        require(s.amount == 0, "Already staked");
+        if (s.amount != 0) revert AlreadyStaked();
 
         s.amount = amount;
         s.timestamp = block.timestamp;
         s.lockTime = lockTime;
         s.unlocked = false;
 
-        require(bvpToken.transferFrom(msg.sender, address(this), amount), "TRANSFER_FROM_FAILED");
+        if (!bvpToken.transferFrom(msg.sender, address(this), amount)) revert TransferFailed();
 
-        emit Staked(msg.sender, amount, lockTime, block.timestamp + lockTime);
+        unchecked {
+            emit Staked(msg.sender, amount, lockTime, block.timestamp + lockTime);
+        }
     }
 
     function stake3Months(uint256 amount) external {
@@ -68,9 +101,12 @@ contract BVPStaking is ReentrancyGuard {
 
     function unlock() external nonReentrant {
         Stake storage s = stakes[msg.sender];
-        require(s.amount > 0, "No stake");
-        require(!s.unlocked, "Already unlocked");
-        require(block.timestamp >= s.timestamp + s.lockTime, "Still locked");
+        if (s.amount == 0) revert NoStake();
+        if (s.unlocked) revert AlreadyUnlocked();
+        
+        unchecked {
+            if (block.timestamp < s.timestamp + s.lockTime) revert StillLocked();
+        }
 
         s.unlocked = true;
         emit Unlocked(msg.sender, block.timestamp);
@@ -78,11 +114,28 @@ contract BVPStaking is ReentrancyGuard {
 
     function unstake() external nonReentrant {
         Stake memory s = stakes[msg.sender];
-        require(s.unlocked, "Not unlocked");
+        if (!s.unlocked) revert NotUnlocked();
 
         delete stakes[msg.sender];
-        require(bvpToken.transfer(msg.sender, s.amount), "TRANSFER_FAILED");
+        if (!bvpToken.transfer(msg.sender, s.amount)) revert TransferFailed();
 
+        emit Unstaked(msg.sender, s.amount);
+    }
+
+    /// @notice Combined unlock and unstake in a single transaction (gas-efficient)
+    /// @dev Only works if lock period has expired; reverts otherwise
+    function unlockAndUnstake() external nonReentrant {
+        Stake memory s = stakes[msg.sender];
+        if (s.amount == 0) revert NoStake();
+        
+        unchecked {
+            if (block.timestamp < s.timestamp + s.lockTime) revert StillLocked();
+        }
+
+        delete stakes[msg.sender];
+        if (!bvpToken.transfer(msg.sender, s.amount)) revert TransferFailed();
+
+        emit Unlocked(msg.sender, block.timestamp);
         emit Unstaked(msg.sender, s.amount);
     }
 
@@ -102,26 +155,35 @@ contract BVPStaking is ReentrancyGuard {
         timestamp = s.timestamp;
         lockTime = s.lockTime;
         unlocked = s.unlocked;
-        unlockAt = s.timestamp + s.lockTime;
+        unchecked {
+            unlockAt = s.timestamp + s.lockTime;
+        }
     }
 
+    /// @dev Optimized tier calculation using binary search pattern (descending)
     function getTierCode(address user) public view returns (uint8) {
         uint256 a = stakes[user].amount;
-        if (a >= TH_DIAMOND) return 5;
-        if (a >= TH_PLATINUM) return 4;
-        if (a >= TH_GOLD) return 3;
-        if (a >= TH_SILVER) return 2;
-        if (a >= TH_BRONZE) return 1;
+        // Binary search: check mid-tier first, then split
+        if (a >= TH_GOLD) {
+            // Upper half: Gold/Platinum/Diamond
+            if (a >= TH_DIAMOND) return 5;
+            if (a >= TH_PLATINUM) return 4;
+            return 3;
+        } else if (a >= TH_BRONZE) {
+            // Lower half: Bronze/Silver
+            if (a >= TH_SILVER) return 2;
+            return 1;
+        }
         return 0;
     }
 
     function getTierName(address user) external view returns (string memory) {
         uint8 code = getTierCode(user);
-        if (code == 1) return "Bronze";
-        if (code == 2) return "Silver";
-        if (code == 3) return "Gold";
-        if (code == 4) return "Platinum";
         if (code == 5) return "Diamond";
+        if (code == 4) return "Platinum";
+        if (code == 3) return "Gold";
+        if (code == 2) return "Silver";
+        if (code == 1) return "Bronze";
         return "None";
     }
 

@@ -82,4 +82,38 @@ contract BVPStakingTest is Test {
         (uint256 amount,,,,) = staking.getStake(user);
         assertEq(amount, 0);
     }
+
+    /// @notice Unlock should succeed exactly at the lock boundary (no off-by-one)
+    function testUnlockAtExactBoundary() public {
+        vm.prank(user);
+        staking.stake3Months(100_000 ether);
+
+        // Jump to exactly timestamp + LOCK_TIME_3M
+        (,, uint256 lockTime,, uint256 unlockAt) = staking.getStake(user);
+        assertEq(lockTime, staking.LOCK_TIME_3M());
+
+        vm.warp(unlockAt);
+
+        vm.prank(user);
+        staking.unlock(); // should not revert
+    }
+
+    /// @notice After a full unlock/unstake cycle, a user can stake again
+    function testRestakeAfterFullUnstake() public {
+        vm.startPrank(user);
+        staking.stake3Months(100_000 ether);
+
+        // Complete first stake cycle
+        vm.warp(block.timestamp + 91 days);
+        staking.unlock();
+        staking.unstake();
+
+        // Stake again with a different lock duration
+        staking.stake6Months(200_000 ether);
+        vm.stopPrank();
+
+        (uint256 amount,, uint256 lockTime,,) = staking.getStake(user);
+        assertEq(amount, 200_000 ether);
+        assertEq(lockTime, staking.LOCK_TIME_6M());
+    }
 }
