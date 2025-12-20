@@ -1,14 +1,14 @@
 {
   "network": "arbitrum-sepolia",
   "chainId": 421614,
-  "deployer": "0x8B79c656DFE9Ab86cDF4d270eE0910753b94368c",
+  "deployer": "0x8B79c656DFE9Ab86cDF4D270eE0910753b94368c",
   "contracts": {
     "BVPToken": {
-      "address": "0x159C3Dcc12841951a13e4a21459A90011C910236",
+      "address": "0xc5B33C8471f0ecf3a3BB7C73E563eF65D9a6b537",
       "verified": true
     },
     "BVPStaking": {
-      "address": "0x305E61450db56e1a5e8166E5e83Eb5643A03592C",
+      "address": "0x2Ae5b728382b325d12cEc0417c318Ee95e4d792C",
       "verified": true
     }
   },
@@ -25,8 +25,8 @@
   "verification": {
     "arbiscan": true,
     "urls": {
-      "BVPToken": "https://sepolia.arbiscan.io/address/0x159C3Dcc12841951a13e4a21459A90011C910236#code",
-      "BVPStaking": "https://sepolia.arbiscan.io/address/0x305E61450db56e1a5e8166E5e83Eb5643A03592C#code"
+      "BVPToken": "https://sepolia.arbiscan.io/address/0xc5B33C8471f0ecf3a3BB7C73E563eF65D9a6b537#code",
+      "BVPStaking": "https://sepolia.arbiscan.io/address/0x2Ae5b728382b325d12cEc0417c318Ee95e4d792C#code"
     }
   }
 }

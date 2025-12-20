@@ -9,6 +9,13 @@ For the latest deployed addresses, see `deployments/arbitrum-sepolia.json`. Exam
 
 In production, you should maintain similar deployment files per network and load them into your client apps or scripts.
 
+#### Current Arbitrum Sepolia deployment (2025-12-20)
+
+- **BVPToken**: `0xc5B33C8471f0ecf3a3BB7C73E563eF65D9a6b537`
+- **BVPStaking**: `0x2Ae5b728382b325d12cEc0417c318Ee95e4d792C`
+
+> Source of truth: `deployments/arbitrum-sepolia.json`
+
 ### BVPToken
 
 - Standard ERC-20 interface with:

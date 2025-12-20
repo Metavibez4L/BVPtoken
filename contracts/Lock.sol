@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.19;
+pragma solidity ^0.8.24;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
+
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
 
 /// @title Time-Locked ETH Contract
 /// @notice Simple timelock mechanism that holds ETH until a specified unlock time
@@ -25,12 +28,11 @@ pragma solidity 0.8.19;
 ///      - If unlockTime is set far in future, funds are locked indefinitely
 ///      - No upgrade path or admin override
 ///      - Test with short periods before locking large amounts
-contract Lock {
+contract Lock is ReentrancyGuard {
     // ---- Custom Errors ----
     error UnlockTimeInPast();
     error StillLocked();
     error Unauthorized();
-    error TransferFailed();
 
     /// @notice Timestamp after which the funds can be withdrawn
     /// @dev Marked as immutable to save gas (set once during construction)
@@ -49,7 +51,7 @@ contract Lock {
         owner = payable(msg.sender);
     }
 
-    function withdraw() public {
+    function withdraw() public nonReentrant {
         // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
 
         if (block.timestamp < unlockTime) revert StillLocked();
@@ -57,9 +59,8 @@ contract Lock {
 
         uint256 amount = address(this).balance;
         emit Withdrawal(amount, block.timestamp);
-        
-        // Use .call instead of .transfer for better compatibility with contract recipients
-        (bool success, ) = owner.call{value: amount}("");
-        if (!success) revert TransferFailed();
+
+        // Use sendValue (uses .call under the hood) for better compatibility with contract recipients
+        Address.sendValue(owner, amount);
     }
 }

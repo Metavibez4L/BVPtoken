@@ -42,23 +42,25 @@ async function main() {
     liquidity
   ];
   const token = await BVPToken.deploy(...tokenArgs);
-  await token.deployed();
-  console.log("✅ BVPToken deployed at:", token.address);
+  await token.waitForDeployment();
+  const tokenAddress = await token.getAddress();
+  console.log("✅ BVPToken deployed at:", tokenAddress);
 
   // === Deploy BVPStaking ===
   const BVPStaking = await ethers.getContractFactory("BVPStaking");
-  const stakingArgs = [token.address];
+  const stakingArgs = [tokenAddress];
   const staking = await BVPStaking.deploy(...stakingArgs);
-  await staking.deployed();
-  console.log("✅ BVPStaking deployed at:", staking.address);
+  await staking.waitForDeployment();
+  const stakingAddress = await staking.getAddress();
+  console.log("✅ BVPStaking deployed at:", stakingAddress);
 
   console.log("\n📜 Deployment Summary:");
-  console.log(" - BVPToken   :", token.address);
-  console.log(" - BVPStaking :", staking.address);
+  console.log(" - BVPToken   :", tokenAddress);
+  console.log(" - BVPStaking :", stakingAddress);
 
   // === Verify both ===
-  await verify(token.address, tokenArgs);
-  await verify(staking.address, stakingArgs);
+  await verify(tokenAddress, tokenArgs);
+  await verify(stakingAddress, stakingArgs);
 
   // === Persist deployment metadata ===
   const outDir = join(__dirname, "..", "deployments");
@@ -70,11 +72,11 @@ async function main() {
     deployer: deployer.address,
     contracts: {
       BVPToken: {
-        address: token.address,
+        address: tokenAddress,
         verified: true,
       },
       BVPStaking: {
-        address: staking.address,
+        address: stakingAddress,
         verified: true,
       },
     },
@@ -91,8 +93,8 @@ async function main() {
     verification: {
       arbiscan: true,
       urls: {
-        BVPToken: `https://sepolia.arbiscan.io/address/${token.address}#code`,
-        BVPStaking: `https://sepolia.arbiscan.io/address/${staking.address}#code`,
+        BVPToken: `https://sepolia.arbiscan.io/address/${tokenAddress}#code`,
+        BVPStaking: `https://sepolia.arbiscan.io/address/${stakingAddress}#code`,
       },
     },
   };

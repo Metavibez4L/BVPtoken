@@ -18,6 +18,15 @@ This document outlines how to present the Sepolia deployment and gather early fe
     - High-level description of what’s safe to test (staking, production flows) and what is not (no real funds).
     - Links to developer docs (`INTEGRATION.md`, `ARCHITECTURE.md`).
 
+#### Current Arbitrum Sepolia deployment (2025-12-20)
+
+- **BVPToken**: `0xc5B33C8471f0ecf3a3BB7C73E563eF65D9a6b537`  
+  - Verified: `https://sepolia.arbiscan.io/address/0xc5B33C8471f0ecf3a3BB7C73E563eF65D9a6b537#code`
+- **BVPStaking**: `0x2Ae5b728382b325d12cEc0417c318Ee95e4d792C`  
+  - Verified: `https://sepolia.arbiscan.io/address/0x2Ae5b728382b325d12cEc0417c318Ee95e4d792C#code`
+
+> Source of truth: `deployments/arbitrum-sepolia.json`
+
 ---
 
 ### 2. Bridges and Exchanges (Planning Only)

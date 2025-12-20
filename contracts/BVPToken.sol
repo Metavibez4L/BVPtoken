@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Capped.sol";
@@ -66,19 +66,19 @@ contract BVPToken is ERC20, ERC20Capped, ERC20Permit {
         maxWallet = 20_000_000 ether; // 20,000,000 BVP  (2% of total supply)
 
         // Cache cap for gas savings (called 8 times below)
-        uint256 _cap = cap();
+        uint256 cap_ = cap();
 
         // ---- Initial allocations (sum to 100% of cap) ----
         // Using unchecked: all divisions are safe (cap is 1B * 1e18, divisors are 100)
         unchecked {
-            _mint(publicSale_,       _cap * 30 / 100);
-            _mint(operations_,       _cap * 20 / 100);
-            _mint(presale_,          _cap * 10 / 100);
-            _mint(foundersAndTeam_,  _cap * 10 / 100);
-            _mint(marketing_,        _cap * 15 / 100);
-            _mint(advisors_,         _cap *  5 / 100);
-            _mint(treasury_,         _cap *  5 / 100);
-            _mint(liquidity_,        _cap *  5 / 100);
+            _mint(publicSale_,       cap_ * 30 / 100);
+            _mint(operations_,       cap_ * 20 / 100);
+            _mint(presale_,          cap_ * 10 / 100);
+            _mint(foundersAndTeam_,  cap_ * 10 / 100);
+            _mint(marketing_,        cap_ * 15 / 100);
+            _mint(advisors_,         cap_ *  5 / 100);
+            _mint(treasury_,         cap_ *  5 / 100);
+            _mint(liquidity_,        cap_ *  5 / 100);
         }
 
         // ---- Fixed exclusions (no setters; encoded policy) ----

@@ -105,10 +105,9 @@ Edit
 forge test -vv
 Deploy to Arbitrum Sepolia:
 
-bash
-Copy
-Edit
-npx hardhat run scripts/deploy.ts --network arbitrumsepolia
+```bash
+npm run deploy:arbitrum-sepolia
+```
 🌐 Learn More
 📖 Whitepaper
 
@@ -168,6 +167,15 @@ network, deployer, and contract addresses:
 
 - Arbitrum Sepolia (testnet): `deployments/arbitrum-sepolia.json`
 - Arbitrum mainnet: `deployments/arbitrum-mainnet.json` (once deployed)
+
+#### Current Arbitrum Sepolia deployment (2025-12-20)
+
+- **BVPToken**: `0xc5B33C8471f0ecf3a3BB7C73E563eF65D9a6b537`  
+  - Verified: `https://sepolia.arbiscan.io/address/0xc5B33C8471f0ecf3a3BB7C73E563eF65D9a6b537#code`
+- **BVPStaking**: `0x2Ae5b728382b325d12cEc0417c318Ee95e4d792C`  
+  - Verified: `https://sepolia.arbiscan.io/address/0x2Ae5b728382b325d12cEc0417c318Ee95e4d792C#code`
+
+> Source of truth: `deployments/arbitrum-sepolia.json`
 
 ### Security Properties
 

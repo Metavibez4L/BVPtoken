@@ -6,7 +6,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.19",
+  solidity: "0.8.24",
   paths: { tests: "./hardhat-tests" },
   networks: {
     hardhat: { chainId: 31337, accounts: { count: 10 } },
