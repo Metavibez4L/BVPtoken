@@ -37,6 +37,8 @@ forge test -vv
 These commands should pass without failures or unexpected warnings before code
 is sent to auditors.
 
+> For the full test matrix (including subchain tests, coverage, and Windows/WSL notes), see `TESTING.md`.
+
 ---
 
 ### 3. Static Analysis
@@ -52,6 +54,9 @@ npm run mythril:lock     # myth analyze contracts/Lock.sol
 
 Include any non-trivial findings, plus your assessment, in the audit
 submission package.
+
+Notes:
+- On Windows, Slither is typically easiest to run from WSL. See `TESTING.md` for recommended commands.
 
 ---
 

@@ -7,7 +7,7 @@
 ### 1. Code Review & Static Analysis
 
 - [x] Manual security review completed (SECURITY_ANALYSIS.md)
-- [ ] Run Slither static analysis (when tooling available)
+- [ ] Run Slither static analysis (see `TESTING.md`)
 - [ ] Run Mythril symbolic execution
 - [x] Run Solhint linter
 - [ ] All HIGH/CRITICAL findings resolved
@@ -29,9 +29,9 @@
 ### 3. Dependencies & Configuration
 
 - [x] OpenZeppelin contracts pinned to exact version (not ^)
-- [x] Solidity compiler version pinned
+- [x] Solidity compiler version pinned in tooling (`hardhat.config.ts`, `foundry.toml`)
 - [ ] Compiler optimization settings documented
-- [x] No floating pragma in production files
+- [ ] Solidity pragmas reviewed (tooling pins compiler; pragmas are compatibility constraints)
 - [ ] Dependencies audited and up-to-date
 - [ ] Network configurations verified (RPC URLs, Chain IDs)
 

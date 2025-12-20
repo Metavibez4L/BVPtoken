@@ -87,22 +87,29 @@ tests/
 🚀 Get Started
 Install Dependencies:
 
-bash
-Copy
-Edit
-yarn install
-Compile Contracts:
+```bash
+npm install
+```
 
-bash
-Copy
-Edit
-npx hardhat compile
-Run Tests:
+Compile contracts:
 
-bash
-Copy
-Edit
+```bash
+npm run compile
+```
+
+Run tests (Hardhat):
+
+```bash
+npm test
+```
+
+Run tests (Foundry):
+
+```bash
 forge test -vv
+```
+
+> See `TESTING.md` for the full test matrix (Hardhat + Foundry + subchain + Slither) and Windows/WSL notes.
 Deploy to Arbitrum Sepolia:
 
 ```bash
@@ -127,6 +134,7 @@ BVP isn’t just making films—it’s remaking the entertainment industry from 
 - Architecture & trust model: `ARCHITECTURE.md`
 - Governance & roles: `GOVERNANCE.md`
 - Monitoring & incident response: `MONITORING.md`
+- Testing (Hardhat + Foundry + WSL notes): `TESTING.md`
 - Audit preparation: `AUDIT_PREP.md`
 - Integration guide (ABIs & flows): `INTEGRATION.md`
 - Compliance & risk notes: `COMPLIANCE_NOTES.md`

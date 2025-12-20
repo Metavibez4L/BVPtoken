@@ -15,32 +15,21 @@ Libraries and test helpers (`forge-std`, mocks, etc.) are considered out of scop
 
 ### Build & Test Commands
 
-- **Hardhat**
-  - Compile: `npm run compile`
-  - Tests: `npm test`
-  - Coverage: `npm run coverage`
+- See `TESTING.md` for the canonical commands (Hardhat + Foundry + subchain + coverage + Slither).
 
-- **Foundry (root)**
-  - Tests: `forge test -vv`
+Minimum expected before audit handoff:
 
-- **Foundry (subchain)**
-  - `cd subchain && forge test -vv`
+- `npm run compile`
+- `npm test`
+- `forge test -vv`
+- `cd subchain && forge test -vv`
+- `npm run coverage` (optional but recommended)
 
 Auditors should run all of the above and confirm there are no failing tests or unexpected warnings.
 
 ### Suggested Static Analysis
 
-These commands assume Slither is installed globally (`pip install slither-analyzer`):
-
-- Global run (root):
-  - `slither . --filter-paths 'lib|node_modules|out|hh-artifacts'`
-
-If performance is an issue, run Slither on specific contracts:
-
-- `slither contracts/BVPToken.sol`
-- `slither contracts/BVPStaking.sol`
-- `slither subchain/contracts/ProductionVault.sol`
-- `slither subchain/contracts/VendorPayment.sol`
+See `TESTING.md` for Slither install/run guidance (WSL recommended on Windows).
 
 ### Key Invariants (per Contract)
 

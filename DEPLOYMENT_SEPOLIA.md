@@ -46,6 +46,8 @@ cd subchain && forge test -vv && cd ..
 
 All tests must pass with no unexpected warnings before deployment.
 
+> See `TESTING.md` for the canonical test instructions (including Windows/WSL notes and Slither guidance).
+
 ---
 
 ### 3. Deploying to Arbitrum Sepolia

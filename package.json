@@ -8,8 +8,8 @@
     "clean": "hardhat clean",
     "deploy:arbitrum-sepolia": "hardhat run script/deploy_arbitrumSepolia.ts --network arbitrumsepolia",
     "deploy:arbitrum-mainnet": "hardhat run script/deploy_arbitrum.ts --network arbitrumOne",
-    "lint:sol": "solhint 'contracts/**/*.sol'",
-    "slither": "slither . --filter-paths 'lib|node_modules|out|hh-artifacts' || true",
+    "lint:sol": "solhint \"contracts/**/*.sol\"",
+    "slither": "slither . --filter-paths \"lib|node_modules|out|hh-artifacts\" || true",
     "mythril:token": "myth analyze contracts/BVPToken.sol || true",
     "mythril:staking": "myth analyze contracts/BVPStaking.sol || true",
     "mythril:lock": "myth analyze contracts/Lock.sol || true"
